@@ -127,9 +127,32 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Raytracing-DX12.cpp" />
+    <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\Color.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Core\InputSystem\InputSystem.vcxproj">
+      <Project>{32ac94c6-ef33-4add-92f9-41270d16e447}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\RenderEngine\RenderEngine.vcxproj">
+      <Project>{24a846a0-75ad-4ed2-9e0e-48533e7dcf6d}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <Target Name="CopyResources" AfterTargets="Build">
+    <ItemGroup>
+      <ShaderFiles Include="$(SolutionDir)AsyncComputeTessellation\Shaders\**\*" />
+      <ModelFiles Include="$(SolutionDir)AsyncComputeTessellation\Models\**\*" />
+      <TextureFiles Include="$(SolutionDir)AsyncComputeTessellation\Textures\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(ShaderFiles)" DestinationFolder="$(OutDir)Shaders" />
+    <Copy SourceFiles="@(ModelFiles)" DestinationFolder="$(OutDir)Models" />
+    <Copy SourceFiles="@(TextureFiles)" DestinationFolder="$(OutDir)Textures" />
+  </Target>
 </Project>
