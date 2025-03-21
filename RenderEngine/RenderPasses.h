@@ -32,9 +32,13 @@ namespace RaytracingDX12
 
 	public:
 		ColorPass(RenderDeviceD3D12* device, const LPCWSTR* macros = nullptr) :
-			m_VertexShader(L"Shaders\\Color.hlsl", EDU_SHADER_TYPE_VERTEX, macros, L"VS", L"vs_6_0"),
-			m_PixelShader(L"Shaders\\Color.hlsl", EDU_SHADER_TYPE_PIXEL, macros, L"PS", L"ps_6_0")
+			m_VertexShader(L"Shaders\\Opaque.hlsl", EDU_SHADER_TYPE_VERTEX, macros, L"VS", L"vs_6_0"),
+			m_PixelShader(L"Shaders\\Opaque.hlsl", EDU_SHADER_TYPE_PIXEL, macros, L"PS", L"ps_6_0")
 		{
+			CD3DX12_DESCRIPTOR_RANGE albedoTex;
+			albedoTex.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+			m_RootSignature.AddDescriptorParameter(1, &albedoTex); // albedo
+
 			m_RootSignature.AddConstantBufferView(0); // object constants
 			m_RootSignature.AddConstantBufferView(1); // pass constants
 

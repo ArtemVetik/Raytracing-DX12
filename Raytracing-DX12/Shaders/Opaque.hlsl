@@ -1,3 +1,13 @@
+SamplerState gsamPointWrap : register(s0);
+SamplerState gsamPointClamp : register(s1);
+SamplerState gsamLinearWrap : register(s2);
+SamplerState gsamLinearClamp : register(s3);
+SamplerState gsamAnisotropicWrap : register(s4);
+SamplerState gsamAnisotropicClamp : register(s5);
+SamplerComparisonState gsamShadow : register(s6);
+
+Texture2D gAlbedo : register(t0);
+
 cbuffer cbPerObject : register(b0)
 {
 	float4x4 gWorld; 
@@ -19,7 +29,7 @@ struct VertexIn
 struct VertexOut
 {
 	float4 PosH  : SV_POSITION;
-    float4 Color : COLOR;
+    float2 TexC : TEXCOORD;
 };
 
 VertexOut VS(VertexIn vin)
@@ -29,14 +39,14 @@ VertexOut VS(VertexIn vin)
     float4 posW = mul(float4(vin.PosL, 1.0f), gWorld);
     
     vout.PosH = mul(posW, gViewProj);
-    vout.Color = float4(vin.TexC, 0, 1);
+    vout.TexC = vin.TexC;
     
     return vout;
 }
 
 float4 PS(VertexOut pin) : SV_Target
 {
-    return pin.Color;
+    return gAlbedo.Sample(gsamLinearClamp, pin.TexC);
 }
 
 

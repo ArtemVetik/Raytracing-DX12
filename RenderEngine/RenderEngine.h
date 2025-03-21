@@ -5,6 +5,7 @@
 #include "Timer.h"
 #include "Camera.h"
 #include "Window.h"
+#include "RenderObject.h"
 
 #include "../Core/Graphics/SwapChain.h"
 
@@ -43,6 +44,11 @@ namespace RaytracingDX12
 		std::unique_ptr<Camera> m_Camera;
 
 		std::unique_ptr<ColorPass> m_ColorPass;
+
+		std::shared_ptr<Texture> m_Texture;
+		std::shared_ptr<Mesh> m_Mesh;
+		std::shared_ptr<Material> m_Material;
+		std::shared_ptr<RenderObject> m_RenderObject;
 
 		D3D12_VIEWPORT m_Viewport;
 		D3D12_RECT m_ScissorRect;

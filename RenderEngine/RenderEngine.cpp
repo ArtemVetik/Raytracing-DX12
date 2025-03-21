@@ -2,9 +2,12 @@
 
 #include <dxgi1_6.h>
 
+#include "../Core/InputSystem/InputManager.h"
+#include "../Core/Graphics/DynamicUploadBuffer.h"
+
 namespace RaytracingDX12
 {
-	RenderEngine* RenderEngine::m_Instance = nullptr;	
+	RenderEngine* RenderEngine::m_Instance = nullptr;
 
 	RenderEngine* RenderEngine::GetInstance()
 	{
@@ -81,17 +84,135 @@ namespace RaytracingDX12
 
 		m_ColorPass = std::make_unique<ColorPass>(m_Device.get());
 
+		m_Mesh = std::make_shared<Mesh>(m_Device.get(), "Models\\joseph.fbx");
+		m_Mesh->Load();
+
+		m_Texture = std::make_unique<Texture>(m_Device.get(), L"Textures\\principledshader_albedo.dds");
+		m_Material = std::make_shared<Material>();
+		m_Material->SetMainTexture(m_Texture.get());
+		m_Material->Load();
+
+		m_RenderObject = std::make_shared<RenderObject>();
+		m_RenderObject->SetMaterial(m_Material.get());
+		m_RenderObject->SetMesh(m_Mesh.get());
+
 		return true;
 	}
 
 	void RenderEngine::Update(const Timer& timer)
 	{
+		XMVECTOR direction = XMLoadFloat3(&m_Camera->GetLook());
+		XMVECTOR lrVector = XMLoadFloat3(&m_Camera->GetRight());
+		XMVECTOR upVector = XMLoadFloat3(&m_Camera->GetUp());
 
+		float moveScale = 35.0f;
+		static constexpr float rotateScale = 0.01f;
+		static constexpr float rotateLerpSpeed = 20.0f;
+
+		if (InputManager::GetInstance().IsKeyPressed(DIK_LSHIFT))
+			moveScale *= 2;
+
+		if (InputManager::GetInstance().IsKeyPressed(DIK_W))
+			m_Camera->Move(direction * moveScale * timer.GetDeltaTime());
+		if (InputManager::GetInstance().IsKeyPressed(DIK_S))
+			m_Camera->Move(-direction * moveScale * timer.GetDeltaTime());
+		if (InputManager::GetInstance().IsKeyPressed(DIK_A))
+			m_Camera->Move(-lrVector * moveScale * timer.GetDeltaTime());
+		if (InputManager::GetInstance().IsKeyPressed(DIK_D))
+			m_Camera->Move(lrVector * moveScale * timer.GetDeltaTime());
+		if (InputManager::GetInstance().IsKeyPressed(DIK_E))
+			m_Camera->Move(upVector * moveScale * timer.GetDeltaTime());
+		if (InputManager::GetInstance().IsKeyPressed(DIK_Q))
+			m_Camera->Move(-upVector * moveScale * timer.GetDeltaTime());
+
+		auto mouseState = InputManager::GetInstance().GetMouseState();
+
+		static XMFLOAT2 currentDelta = { 0, 0 };
+		static XMFLOAT2 targetDelta = { 0, 0 };
+
+		if ((mouseState.rgbButtons[1] & 0x80) != 0)
+		{
+			targetDelta.x += mouseState.lX * rotateScale;
+			targetDelta.y += mouseState.lY * rotateScale;
+		}
+
+		auto Lerp = [](float a, float b, float t) {
+			return a + (b - a) * t;
+			};
+
+		float prevX = currentDelta.x;
+		currentDelta.x = Lerp(currentDelta.x, targetDelta.x, timer.GetDeltaTime() * rotateLerpSpeed);
+		m_Camera->RotateY(currentDelta.x - prevX);
+
+		float prevY = currentDelta.y;
+		currentDelta.y = Lerp(currentDelta.y, targetDelta.y, timer.GetDeltaTime() * rotateLerpSpeed);
+		m_Camera->Pitch(currentDelta.y - prevY);
+
+		m_Camera->Update(timer);
 	}
 
 	void RenderEngine::Render()
 	{
+		ID3D12DescriptorHeap* descriptorHeaps[] = { m_Device->GetD3D12DescriptorHeap() };
 
+		auto& dCommandContext = m_Device->GetCommandContext(D3D12_COMMAND_LIST_TYPE_DIRECT);
+		auto& dCommandQueue = m_Device->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+
+		dCommandContext.Reset();
+		dCommandContext.ResourceBarrier(CD3DX12_RESOURCE_BARRIER::Transition(m_SwapChain->CurrentBackBuffer(),
+			D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+		dCommandContext.GetCmdList()->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+
+		dCommandContext.SetRenderTargets(1, &m_SwapChain->CurrentBackBufferView(), true, &m_SwapChain->DepthStencilView());
+		dCommandContext.SetViewports(&m_Viewport, 1);
+		dCommandContext.SetScissorRects(&m_ScissorRect, 1);
+
+		const float clear[4] = { 0, 1, 0, 1 };
+		dCommandContext.GetCmdList()->ClearRenderTargetView(m_SwapChain->CurrentBackBufferView(), clear, 0, nullptr);
+		dCommandContext.GetCmdList()->ClearDepthStencilView(m_SwapChain->DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+
+		dCommandContext.GetCmdList()->SetPipelineState(m_ColorPass->GetD3D12PipelineState());
+		dCommandContext.GetCmdList()->SetGraphicsRootSignature(m_ColorPass->GetD3D12RootSignature());
+	
+		ColorPass::ObjectConstants objConstants;
+		objConstants.World = (SimpleMath::Matrix::CreateScale(0.1f) * SimpleMath::Matrix::CreateRotationY(XM_PI)).Transpose();
+
+		ColorPass::PassConstants passConstants;
+		XMStoreFloat4x4(&passConstants.ViewProj, XMMatrixTranspose(m_Camera->GetViewProjMatrix()));
+
+		DynamicUploadBuffer objBuffer(m_Device.get(), QueueID::Direct);
+		objBuffer.LoadData(objConstants);
+
+		DynamicUploadBuffer passBuffer(m_Device.get(), QueueID::Direct);
+		passBuffer.LoadData(passConstants);
+
+		D3D12_GPU_DESCRIPTOR_HANDLE albedoTex = {};
+		albedoTex.ptr = reinterpret_cast<UINT64>(m_Texture->GetGPUPtr());
+		dCommandContext.GetCmdList()->SetGraphicsRootDescriptorTable(0, albedoTex);
+		dCommandContext.GetCmdList()->SetGraphicsRootConstantBufferView(1, objBuffer.GetAllocation().GPUAddress);
+		dCommandContext.GetCmdList()->SetGraphicsRootConstantBufferView(2, passBuffer.GetAllocation().GPUAddress);
+
+		dCommandContext.GetCmdList()->IASetVertexBuffers(0, 1, &(m_RenderObject->GetVertexBuffer()->GetView()));
+		dCommandContext.GetCmdList()->IASetIndexBuffer(&(m_RenderObject->GetIndexBuffer()->GetView()));
+		dCommandContext.GetCmdList()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+		dCommandContext.GetCmdList()->DrawIndexedInstanced(m_RenderObject->GetIndexBuffer()->GetLength(), 1, 0, 0, 0);
+
+		dCommandQueue.CloseAndExecuteCommandContext(&dCommandContext);
+		dCommandContext.Reset();
+
+		m_SwapChain->Present();
+		m_Device->FinishFrame();
+
+		// Resize should be at the end of the frame after the main ExecuteCommandList and FinishFrame.
+		// Since FinishFrame also occurs inside swapChain->Resize(), and it is not desirable
+		// that resources are removed before the end of rendering
+		if (m_PendingResize != EmptyResize)
+		{
+			Resize(m_PendingResize.width, m_PendingResize.height);
+			m_PendingResize = EmptyResize;
+			dCommandContext.Reset();
+		}
 	}
 
 	void RenderEngine::PendingResize(UINT w, UINT h)

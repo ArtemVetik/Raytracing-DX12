@@ -29,7 +29,7 @@ namespace RaytracingDX12
 			return;
 		}
 
-		m_Scene = m_AssimpImporter.ReadFile(m_FilePath, aiProcess_PreTransformVertices | aiProcessPreset_TargetRealtime_Fast | aiProcess_GenBoundingBoxes);
+		m_Scene = m_AssimpImporter.ReadFile(m_FilePath, aiProcess_FlipUVs);
 
 		MeshData meshData;
 		for (int i = 0; i < m_Scene->mMeshes[0]->mNumVertices; i++)
