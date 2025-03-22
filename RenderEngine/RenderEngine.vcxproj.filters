@@ -75,6 +75,9 @@
     <ClInclude Include="DXRHelpers\nv_helpers_dx12\TopLevelASGenerator.h">
       <Filter>DXRHelpers\nv_helpers_dx12</Filter>
     </ClInclude>
+    <ClInclude Include="AccelerationStructure.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -121,6 +124,9 @@
     </ClCompile>
     <ClCompile Include="DXRHelpers\nv_helpers_dx12\TopLevelASGenerator.cpp">
       <Filter>DXRHelpers\nv_helpers_dx12</Filter>
+    </ClCompile>
+    <ClCompile Include="AccelerationStructure.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

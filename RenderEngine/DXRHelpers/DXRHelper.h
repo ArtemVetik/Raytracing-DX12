@@ -8,7 +8,6 @@
 #include <sstream>
 #include <string>
 #include <d3d12.h>
-#include "DXSampleHelper.h"
 #include <dxcapi.h>
 
 #include <vector>
@@ -16,10 +15,18 @@
 namespace nv_helpers_dx12
 {
 
+inline void ThrowIfFailed(HRESULT hr)
+{
+    if (FAILED(hr))
+    {
+        throw std::exception();
+    }
+}
+
 //--------------------------------------------------------------------------------------------------
 //
 //
-inline ID3D12Resource* CreateBuffer(ID3D12Device* m_device, uint64_t size,
+inline Microsoft::WRL::ComPtr<ID3D12Resource> CreateBuffer(ID3D12Device* m_device, uint64_t size,
                                     D3D12_RESOURCE_FLAGS flags, D3D12_RESOURCE_STATES initState,
                                     const D3D12_HEAP_PROPERTIES& heapProps)
 {
@@ -36,7 +43,7 @@ inline ID3D12Resource* CreateBuffer(ID3D12Device* m_device, uint64_t size,
   bufDesc.SampleDesc.Quality = 0;
   bufDesc.Width = size;
 
-  ID3D12Resource* pBuffer;
+  Microsoft::WRL::ComPtr<ID3D12Resource> pBuffer;
   ThrowIfFailed(m_device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &bufDesc,
                                                   initState, nullptr, IID_PPV_ARGS(&pBuffer)));
   return pBuffer;

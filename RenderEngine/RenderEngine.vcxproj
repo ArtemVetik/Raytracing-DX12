@@ -149,6 +149,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AccelerationStructure.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="DXRHelpers\DXRHelper.h" />
     <ClInclude Include="DXRHelpers\nv_helpers_dx12\BottomLevelASGenerator.h" />
@@ -169,6 +170,7 @@
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AccelerationStructure.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="DXRHelpers\nv_helpers_dx12\BottomLevelASGenerator.cpp" />

@@ -59,8 +59,8 @@ namespace RaytracingDX12
 
 		m_VertexBuffer = std::make_shared<VertexBufferD3D12>(m_Device, meshData.Vertices.data(),
 			sizeof(Vertex), (UINT)meshData.Vertices.size());
-		m_IndexBuffer = std::make_shared<IndexBufferD3D12>(m_Device, meshData.GetIndices16().data(),
-			sizeof(uint16), (UINT)meshData.GetIndices16().size(), DXGI_FORMAT_R16_UINT);
+		m_IndexBuffer = std::make_shared<IndexBufferD3D12>(m_Device, meshData.Indices32.data(),
+			sizeof(uint32), (UINT)meshData.Indices32.size(), DXGI_FORMAT_R32_UINT); // TODO DXGI_FORMAT_R16_UINT
 
 		m_RefCount = 1;
 	}

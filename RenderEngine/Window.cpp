@@ -57,7 +57,7 @@ namespace RaytracingDX12
 			return false;
 		}
 
-		ShowWindow(m_MainWindowHandle, SW_MAXIMIZE);
+		ShowWindow(m_MainWindowHandle, SW_NORMAL);
 		UpdateWindow(m_MainWindowHandle);
 
 		return true;

@@ -103,6 +103,9 @@ namespace RaytracingDX12
 		m_RenderObject->SetMaterial(m_Material.get());
 		m_RenderObject->SetMesh(m_Mesh.get());
 
+		m_AccelerationStructure = std::make_unique<AccelerationStructure>(m_Device.get());
+		m_AccelerationStructure->CreateAccelerationStructures(m_Mesh.get());
+
 		return true;
 	}
 

@@ -36,7 +36,7 @@ namespace EduEngine
 		
 		void FlushQueues();
 
-		ID3D12Device* GetD3D12Device() const override { return mDevice.Get(); }
+		ID3D12Device5* GetD3D12Device() const override { return mDevice.Get(); }
 		ID3D12DescriptorHeap* GetD3D12DescriptorHeap() const { return m_GPUDescriptorHeaps[0].GetD3D12Heap(); }
 
 	private:
