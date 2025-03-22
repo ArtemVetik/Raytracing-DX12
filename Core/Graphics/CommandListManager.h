@@ -15,7 +15,7 @@ namespace EduEngine
 		CommandListManager& operator = (const CommandListManager&) = delete;
 		CommandListManager& operator = (CommandListManager&&) = delete;
 
-		void CreateNewCommandList(ID3D12GraphicsCommandList** ppList, ID3D12CommandAllocator** ppAllocator);
+		void CreateNewCommandList(ID3D12GraphicsCommandList4** ppList, ID3D12CommandAllocator** ppAllocator);
 
 		void DiscardAllocator(uint64_t fenceValueForReset, Microsoft::WRL::ComPtr<ID3D12CommandAllocator>& allocator);
 		void RequestCommandAllocator(ID3D12CommandAllocator** ppAllocator);

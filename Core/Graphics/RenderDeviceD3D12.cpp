@@ -5,7 +5,7 @@
 
 namespace EduEngine
 {
-	RenderDeviceD3D12::RenderDeviceD3D12(Microsoft::WRL::ComPtr<ID3D12Device> device) :
+	RenderDeviceD3D12::RenderDeviceD3D12(Microsoft::WRL::ComPtr<ID3D12Device5> device) :
 		mDevice(device),
 		m_CPUDescriptorHeaps
 		{

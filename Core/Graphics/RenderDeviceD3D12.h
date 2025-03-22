@@ -14,7 +14,7 @@ namespace EduEngine
 	class GRAPHICS_API RenderDeviceD3D12 : public IRenderDeviceD3D12
 	{
 	public:
-		RenderDeviceD3D12(Microsoft::WRL::ComPtr<ID3D12Device> device);
+		RenderDeviceD3D12(Microsoft::WRL::ComPtr<ID3D12Device5> device);
 		~RenderDeviceD3D12();
 
 		RenderDeviceD3D12(const RenderDeviceD3D12&) = delete;
@@ -43,7 +43,7 @@ namespace EduEngine
 		void SafeReleaseObject(ReleaseResourceWrapper&& wrapper);
 
 	private:
-		Microsoft::WRL::ComPtr<ID3D12Device> mDevice;
+		Microsoft::WRL::ComPtr<ID3D12Device5> mDevice;
 
 		CPUDescriptorHeap m_CPUDescriptorHeaps[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES];
 		GPUDescriptorHeap m_GPUDescriptorHeaps[2];

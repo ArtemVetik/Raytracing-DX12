@@ -10,7 +10,7 @@ namespace EduEngine
 	{
 	}
 
-	void CommandListManager::CreateNewCommandList(ID3D12GraphicsCommandList** List, ID3D12CommandAllocator** Allocator)
+	void CommandListManager::CreateNewCommandList(ID3D12GraphicsCommandList4** List, ID3D12CommandAllocator** Allocator)
 	{
 		RequestCommandAllocator(Allocator);
 		

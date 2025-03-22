@@ -33,12 +33,12 @@ namespace EduEngine
 	private:
 		CommandListManager m_CommandListManager;
 
-		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> m_pCommandList;
+		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> m_pCommandList;
 		Microsoft::WRL::ComPtr<ID3D12CommandAllocator>    m_pCurrentAllocator;
 
 		std::vector<D3D12_RESOURCE_BARRIER> m_PendingResourceBarriers;
 
 	public:
-		ID3D12GraphicsCommandList* GetCmdList() const { return m_pCommandList.Get(); }
+		ID3D12GraphicsCommandList4* GetCmdList() const { return m_pCommandList.Get(); }
 	};
 }

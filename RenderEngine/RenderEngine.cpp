@@ -52,10 +52,10 @@ namespace RaytracingDX12
 			return false;
 		}
 
-		Microsoft::WRL::ComPtr<ID3D12Device> device;
+		Microsoft::WRL::ComPtr<ID3D12Device5> device;
 		HRESULT hardwareResult = D3D12CreateDevice(
 			pAdapter,
-			D3D_FEATURE_LEVEL_11_0,
+			D3D_FEATURE_LEVEL_12_1,
 			IID_PPV_ARGS(device.GetAddressOf()));
 
 		if (FAILED(hardwareResult))
@@ -65,6 +65,13 @@ namespace RaytracingDX12
 			pFactory->Release();
 			return false;
 		}
+
+		D3D12_FEATURE_DATA_D3D12_OPTIONS5 options5 = {};
+		if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &options5, sizeof(options5))))
+			throw std::runtime_error("Failed to check D3D12_FEATURE_D3D12_OPTIONS5 feature support");
+
+		if (options5.RaytracingTier < D3D12_RAYTRACING_TIER_1_0)
+			throw std::runtime_error("Raytracing not supported on device");
 
 		pAdapter->GetDesc1(&m_DeviceDesc);
 
