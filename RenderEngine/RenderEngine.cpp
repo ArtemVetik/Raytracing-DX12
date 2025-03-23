@@ -205,43 +205,94 @@ namespace RaytracingDX12
 		dCommandContext.Reset();
 		dCommandContext.ResourceBarrier(CD3DX12_RESOURCE_BARRIER::Transition(m_SwapChain->CurrentBackBuffer(),
 			D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+
 		dCommandContext.FlushResourceBarriers();
 		dCommandContext.GetCmdList()->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-
 		dCommandContext.SetRenderTargets(1, &m_SwapChain->CurrentBackBufferView(), true, &m_SwapChain->DepthStencilView());
-		dCommandContext.SetViewports(&m_Viewport, 1);
-		dCommandContext.SetScissorRects(&m_ScissorRect, 1);
 
-		const float clear[4] = { 0, 1, 0, 1 };
-		dCommandContext.GetCmdList()->ClearRenderTargetView(m_SwapChain->CurrentBackBufferView(), clear, 0, nullptr);
-		dCommandContext.GetCmdList()->ClearDepthStencilView(m_SwapChain->DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+		if (1)
+		{
+			dCommandContext.ResourceBarrier(CD3DX12_RESOURCE_BARRIER::Transition(m_OutputBuffer->GetD3D12Resource(),
+				D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
+			dCommandContext.FlushResourceBarriers();
 
-		dCommandContext.GetCmdList()->SetPipelineState(m_ColorPass->GetD3D12PipelineState());
-		dCommandContext.GetCmdList()->SetGraphicsRootSignature(m_ColorPass->GetD3D12RootSignature());
-	
-		ColorPass::ObjectConstants objConstants;
-		objConstants.World = (SimpleMath::Matrix::CreateScale(0.1f) * SimpleMath::Matrix::CreateRotationY(XM_PI)).Transpose();
+			auto AlignUp = [](uint64_t value, uint64_t alignment) {
+				return (value + (alignment - 1)) & ~(alignment - 1);
+			};
 
-		ColorPass::PassConstants passConstants;
-		XMStoreFloat4x4(&passConstants.ViewProj, XMMatrixTranspose(m_Camera->GetViewProjMatrix()));
+			D3D12_DISPATCH_RAYS_DESC desc = {};
+			uint32_t rayGenerationSectionSizeInBytes = m_SbtHelper.GetRayGenSectionSize();
+			uint32_t missSectionSizeInBytes = m_SbtHelper.GetMissSectionSize();
+			uint32_t hitGroupsSectionSize = m_SbtHelper.GetHitGroupSectionSize();
 
-		DynamicUploadBuffer objBuffer(m_Device.get(), QueueID::Direct);
-		objBuffer.LoadData(objConstants);
+			desc.RayGenerationShaderRecord.StartAddress = m_SbtStorage->GetD3D12Resource()->GetGPUVirtualAddress();
+			desc.RayGenerationShaderRecord.SizeInBytes = rayGenerationSectionSizeInBytes;
 
-		DynamicUploadBuffer passBuffer(m_Device.get(), QueueID::Direct);
-		passBuffer.LoadData(passConstants);
+			desc.MissShaderTable.StartAddress = m_SbtStorage->GetD3D12Resource()->GetGPUVirtualAddress() + rayGenerationSectionSizeInBytes;
+			desc.MissShaderTable.SizeInBytes = missSectionSizeInBytes;
+			desc.MissShaderTable.StrideInBytes = m_SbtHelper.GetMissEntrySize();
 
-		D3D12_GPU_DESCRIPTOR_HANDLE albedoTex = {};
-		albedoTex.ptr = reinterpret_cast<UINT64>(m_Texture->GetGPUPtr());
-		dCommandContext.GetCmdList()->SetGraphicsRootDescriptorTable(0, albedoTex);
-		dCommandContext.GetCmdList()->SetGraphicsRootConstantBufferView(1, objBuffer.GetAllocation().GPUAddress);
-		dCommandContext.GetCmdList()->SetGraphicsRootConstantBufferView(2, passBuffer.GetAllocation().GPUAddress);
+			desc.HitGroupTable.StartAddress = AlignUp(
+				m_SbtStorage->GetD3D12Resource()->GetGPUVirtualAddress() + rayGenerationSectionSizeInBytes + missSectionSizeInBytes,
+				D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT);
+			desc.HitGroupTable.SizeInBytes = hitGroupsSectionSize;
+			desc.HitGroupTable.StrideInBytes = m_SbtHelper.GetHitGroupEntrySize();
 
-		dCommandContext.GetCmdList()->IASetVertexBuffers(0, 1, &(m_RenderObject->GetVertexBuffer()->GetView()));
-		dCommandContext.GetCmdList()->IASetIndexBuffer(&(m_RenderObject->GetIndexBuffer()->GetView()));
-		dCommandContext.GetCmdList()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			desc.Width = m_SwapChain->GetWidth();
+			desc.Height = m_SwapChain->GetHeight();
+			desc.Depth = 1;
 
-		dCommandContext.GetCmdList()->DrawIndexedInstanced(m_RenderObject->GetIndexBuffer()->GetLength(), 1, 0, 0, 0);
+			dCommandContext.GetCmdList()->SetPipelineState1(m_RaytracingPass->GetRtStateObject());
+			dCommandContext.GetCmdList()->DispatchRays(&desc);
+
+			dCommandContext.ResourceBarrier(CD3DX12_RESOURCE_BARRIER::Transition(m_OutputBuffer->GetD3D12Resource(),
+				D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE));
+			dCommandContext.ResourceBarrier(CD3DX12_RESOURCE_BARRIER::Transition(m_SwapChain->CurrentBackBuffer(),
+				D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_DEST));
+			dCommandContext.FlushResourceBarriers();
+
+			dCommandContext.GetCmdList()->CopyResource(m_SwapChain->CurrentBackBuffer(), m_OutputBuffer->GetD3D12Resource());
+
+			dCommandContext.ResourceBarrier(CD3DX12_RESOURCE_BARRIER::Transition(m_SwapChain->CurrentBackBuffer(),
+				D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET));
+			dCommandContext.FlushResourceBarriers();
+		}
+		else
+		{
+			dCommandContext.SetViewports(&m_Viewport, 1);
+			dCommandContext.SetScissorRects(&m_ScissorRect, 1);
+
+			const float clear[4] = { 0, 1, 0, 1 };
+			dCommandContext.GetCmdList()->ClearRenderTargetView(m_SwapChain->CurrentBackBufferView(), clear, 0, nullptr);
+			dCommandContext.GetCmdList()->ClearDepthStencilView(m_SwapChain->DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+
+			dCommandContext.GetCmdList()->SetPipelineState(m_ColorPass->GetD3D12PipelineState());
+			dCommandContext.GetCmdList()->SetGraphicsRootSignature(m_ColorPass->GetD3D12RootSignature());
+
+			ColorPass::ObjectConstants objConstants;
+			objConstants.World = (SimpleMath::Matrix::CreateScale(0.1f) * SimpleMath::Matrix::CreateRotationY(XM_PI)).Transpose();
+
+			ColorPass::PassConstants passConstants;
+			XMStoreFloat4x4(&passConstants.ViewProj, XMMatrixTranspose(m_Camera->GetViewProjMatrix()));
+
+			DynamicUploadBuffer objBuffer(m_Device.get(), QueueID::Direct);
+			objBuffer.LoadData(objConstants);
+
+			DynamicUploadBuffer passBuffer(m_Device.get(), QueueID::Direct);
+			passBuffer.LoadData(passConstants);
+
+			D3D12_GPU_DESCRIPTOR_HANDLE albedoTex = {};
+			albedoTex.ptr = reinterpret_cast<UINT64>(m_Texture->GetGPUPtr());
+			dCommandContext.GetCmdList()->SetGraphicsRootDescriptorTable(0, albedoTex);
+			dCommandContext.GetCmdList()->SetGraphicsRootConstantBufferView(1, objBuffer.GetAllocation().GPUAddress);
+			dCommandContext.GetCmdList()->SetGraphicsRootConstantBufferView(2, passBuffer.GetAllocation().GPUAddress);
+
+			dCommandContext.GetCmdList()->IASetVertexBuffers(0, 1, &(m_RenderObject->GetVertexBuffer()->GetView()));
+			dCommandContext.GetCmdList()->IASetIndexBuffer(&(m_RenderObject->GetIndexBuffer()->GetView()));
+			dCommandContext.GetCmdList()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+			dCommandContext.GetCmdList()->DrawIndexedInstanced(m_RenderObject->GetIndexBuffer()->GetLength(), 1, 0, 0, 0);
+		}
 
 		dCommandContext.ResourceBarrier(CD3DX12_RESOURCE_BARRIER::Transition(m_SwapChain->CurrentBackBuffer(),
 			D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));

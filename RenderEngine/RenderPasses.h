@@ -129,5 +129,6 @@ namespace RaytracingDX12
 		}
 
 		ID3D12StateObjectProperties* GetRtStateObjectProps() const { return m_RtStateObjectProps.Get(); }
+		ID3D12StateObject* GetRtStateObject() const { return m_RtStateObject.Get(); }
 	};
 }
