@@ -30,6 +30,8 @@ namespace RaytracingDX12
 		void Update(const Timer& timer) override;
 		void Render() override;
 
+		bool IsRaster() const override { return m_Raster; }
+
 		void PendingResize(UINT w, UINT h);
 
 		static RenderEngine* GetInstance();
@@ -60,6 +62,7 @@ namespace RaytracingDX12
 		nv_helpers_dx12::ShaderBindingTableGenerator m_SbtHelper;
 		std::unique_ptr<UploadBufferD3D12> m_SbtStorage;
 
+		bool m_Raster;
 		D3D12_VIEWPORT m_Viewport;
 		D3D12_RECT m_ScissorRect;
 		DXGI_ADAPTER_DESC1 m_DeviceDesc;

@@ -15,6 +15,7 @@ namespace RaytracingDX12
 	}
 
 	RenderEngine::RenderEngine() :
+		m_Raster(true),
 		m_Viewport{},
 		m_ScissorRect{}
 	{
@@ -138,6 +139,9 @@ namespace RaytracingDX12
 		if (InputManager::GetInstance().IsKeyPressed(DIK_Q))
 			m_Camera->Move(-upVector * moveScale * timer.GetDeltaTime());
 
+		if (InputManager::GetInstance().IsKeyDown(DIK_SPACE))
+			m_Raster = !m_Raster;
+
 		auto mouseState = InputManager::GetInstance().GetMouseState();
 
 		static XMFLOAT2 currentDelta = { 0, 0 };
@@ -179,7 +183,7 @@ namespace RaytracingDX12
 		dCommandContext.GetCmdList()->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 		dCommandContext.SetRenderTargets(1, &m_SwapChain->CurrentBackBufferView(), true, &m_SwapChain->DepthStencilView());
 
-		if (1)
+		if (!m_Raster)
 		{
 			dCommandContext.ResourceBarrier(CD3DX12_RESOURCE_BARRIER::Transition(m_OutputBuffer->GetD3D12Resource(),
 				D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));

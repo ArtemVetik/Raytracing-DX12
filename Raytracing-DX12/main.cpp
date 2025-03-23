@@ -10,12 +10,15 @@
 using namespace RaytracingDX12;
 using namespace EduEngine;
 
-void UpdateWindowTitle(HWND window, int rFps, float rMspf)
+void UpdateWindowTitle(HWND window, int rFps, float rMspf, bool isRaster)
 {
 	std::wstringstream out;
 	out.precision(6);
 
-	out << "Raytracing - DX12! (" << " fps: " << rFps << " frame time: " << rMspf << " ms)";
+	if (isRaster)
+		out << "Raytracing - DX12 [RASTER] (" << " fps: " << rFps << " frame time: " << rMspf << " ms)";
+	else
+		out << "Raytracing - DX12 [RAYTRACED] (" << " fps: " << rFps << " frame time: " << rMspf << " ms)";
 
 	SetWindowText(window, out.str().c_str());
 }
@@ -62,7 +65,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, PSTR cmdLine, in
 			if (!window.IsPaused())
 			{
 				if (timer.UpdateTitleBarStats(fps, mspf))
-					UpdateWindowTitle(window.GetMainWindow(), fps, mspf);
+					UpdateWindowTitle(window.GetMainWindow(), fps, mspf, renderEngine->IsRaster());
 
 				renderEngine->Update(timer);
 				renderEngine->Render();
