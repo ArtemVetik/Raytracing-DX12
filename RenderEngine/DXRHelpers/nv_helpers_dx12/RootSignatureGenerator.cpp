@@ -154,7 +154,7 @@ void RootSignatureGenerator::AddRootParameter(D3D12_ROOT_PARAMETER_TYPE type,
 //--------------------------------------------------------------------------------------------------
 //
 // Create the root signature from the set of parameters, in the order of the addition calls
-ID3D12RootSignature* RootSignatureGenerator::Generate(ID3D12Device* device, bool isLocal)
+Microsoft::WRL::ComPtr<ID3D12RootSignature> RootSignatureGenerator::Generate(ID3D12Device* device, bool isLocal)
 {
   // Go through all the parameters, and set the actual addresses of the heap range descriptors based
   // on their indices in the range set array
@@ -183,7 +183,7 @@ ID3D12RootSignature* RootSignatureGenerator::Generate(ID3D12Device* device, bool
   {
     throw std::logic_error("Cannot serialize root signature");
   }
-  ID3D12RootSignature* pRootSig;
+  Microsoft::WRL::ComPtr<ID3D12RootSignature> pRootSig;
   hr = device->CreateRootSignature(0, pSigBlob->GetBufferPointer(), pSigBlob->GetBufferSize(),
                                    IID_PPV_ARGS(&pRootSig));
   if (FAILED(hr))

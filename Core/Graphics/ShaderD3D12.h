@@ -13,6 +13,7 @@ namespace EduEngine
 		EDU_SHADER_TYPE_GEOMETRY,
 		EDU_SHADER_TYPE_PIXEL,
 		EDU_SHADER_TYPE_COMPUTE,
+		EDU_SHADER_TYPE_LIB,
 	};
 
 	class GRAPHICS_API ShaderD3D12
@@ -25,6 +26,7 @@ namespace EduEngine
 					std::wstring	target);
 
 		D3D12_SHADER_BYTECODE GetShaderBytecode() const;
+		Microsoft::WRL::ComPtr<IDxcBlob> GetShaderBlob() const { return m_ShaderBlob; }
 
 		EDU_SHADER_TYPE GetShaderType() const;
 

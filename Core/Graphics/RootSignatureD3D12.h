@@ -23,7 +23,7 @@ namespace EduEngine
 						  UINT registerSpace = 0,
 						  D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL);
 
-		void Build(RenderDeviceD3D12* pDevice, QueueID queueId);
+		void Build(RenderDeviceD3D12* pDevice, QueueID queueId, bool isLocal = false);
 
 		void SetName(const wchar_t* name);
 

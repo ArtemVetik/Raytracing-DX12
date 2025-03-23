@@ -23,7 +23,19 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\Color.hlsl">
+    <None Include="Shaders\Opaque.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\Common.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\Hit.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\Miss.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\RayGen.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

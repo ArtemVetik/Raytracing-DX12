@@ -48,7 +48,7 @@ namespace EduEngine
 		m_SlotParameters.emplace_back(slotParameter);
 	}
 
-	void RootSignatureD3D12::Build(RenderDeviceD3D12* pDevice, QueueID queueId)
+	void RootSignatureD3D12::Build(RenderDeviceD3D12* pDevice, QueueID queueId, bool isLocal)
 	{
 		assert(m_Device == nullptr);
 
@@ -57,9 +57,13 @@ namespace EduEngine
 
 		auto staticSamplers = GetStaticSamplers();
 
+		auto flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+
+		if (isLocal) 
+			flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
+
 		CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(m_SlotParameters.size(), m_SlotParameters.data(), (UINT)staticSamplers.size(),
-			staticSamplers.data(),
-			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+			staticSamplers.data(), flags);
 
 		Microsoft::WRL::ComPtr<ID3DBlob> serializedRootSig = nullptr;
 		Microsoft::WRL::ComPtr<ID3DBlob> errorBlob = nullptr;

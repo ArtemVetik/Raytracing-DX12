@@ -90,6 +90,7 @@ namespace RaytracingDX12
 		m_Device->GetCommandContext(D3D12_COMMAND_LIST_TYPE_DIRECT).Reset();
 
 		m_ColorPass = std::make_unique<ColorPass>(m_Device.get());
+		m_RaytracingPass = std::make_unique<RaytracingPass>(m_Device.get());
 
 		m_Mesh = std::make_shared<Mesh>(m_Device.get(), "Models\\joseph.fbx");
 		m_Mesh->Load();

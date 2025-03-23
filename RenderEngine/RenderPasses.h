@@ -7,7 +7,10 @@
 #include "../Core/Graphics/CommandSignatureD3D12.h"
 #include "../Core/EduMath/SimpleMath.h"
 
+#include "DXRHelpers/nv_helpers_dx12/RaytracingPipelineGenerator.h"
+
 using namespace EduEngine;
+using namespace Microsoft::WRL;
 
 namespace RaytracingDX12
 {
@@ -63,5 +66,66 @@ namespace RaytracingDX12
 
 		ID3D12RootSignature* GetD3D12RootSignature() const { return m_RootSignature.GetD3D12RootSignature(); }
 		ID3D12PipelineState* GetD3D12PipelineState() const { return m_Pso.GetD3D12PipelineState(); }
+	};
+
+	class RaytracingPass
+	{
+	private:
+		ShaderD3D12 m_RayGenShader;
+		ShaderD3D12 m_HitShader;
+		ShaderD3D12 m_MissShader;
+		RootSignatureD3D12 m_RayGenSignature;
+		RootSignatureD3D12 m_HitSignature;
+		RootSignatureD3D12 m_MissSignature;
+
+		ComPtr<ID3D12StateObject> m_rtStateObject;
+		ComPtr<ID3D12StateObjectProperties> m_rtStateObjectProps;
+
+	public:
+		RaytracingPass(RenderDeviceD3D12* device, const LPCWSTR* macros = nullptr) :
+			m_RayGenShader(L"Shaders\\RayGen.hlsl", EDU_SHADER_TYPE_LIB, macros, L"", L"lib_6_3"),
+			m_HitShader(L"Shaders\\Hit.hlsl", EDU_SHADER_TYPE_LIB, macros, L"", L"lib_6_3"),
+			m_MissShader(L"Shaders\\Miss.hlsl", EDU_SHADER_TYPE_LIB, macros, L"", L"lib_6_3")
+		{
+			CD3DX12_DESCRIPTOR_RANGE output;
+			output.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);
+			m_RayGenSignature.AddDescriptorParameter(1, &output); // output
+
+			CD3DX12_DESCRIPTOR_RANGE tlas;
+			tlas.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+			m_RayGenSignature.AddDescriptorParameter(1, &tlas); // TLAS
+
+			m_RayGenSignature.Build(device, QueueID::Direct, true);
+			m_RayGenSignature.SetName(L"RayGenSignature");
+
+			m_HitSignature.Build(device, QueueID::Direct, true);
+			m_HitSignature.SetName(L"HitSignature");
+
+			m_MissSignature.Build(device, QueueID::Direct, true);
+			m_MissSignature.SetName(L"MissSignature");
+
+			nv_helpers_dx12::RayTracingPipelineGenerator pipeline(device->GetD3D12Device());
+
+			pipeline.AddLibrary(m_RayGenShader.GetShaderBlob().Get(), { L"RayGen" });
+			pipeline.AddLibrary(m_MissShader.GetShaderBlob().Get(), { L"Miss" });
+			pipeline.AddLibrary(m_HitShader.GetShaderBlob().Get(), { L"ClosestHit" });
+
+			pipeline.AddHitGroup(L"HitGroup", L"ClosestHit");
+
+			pipeline.AddRootSignatureAssociation(m_RayGenSignature.GetD3D12RootSignature(), { L"RayGen" });
+			pipeline.AddRootSignatureAssociation(m_MissSignature.GetD3D12RootSignature(), { L"Miss" });
+			pipeline.AddRootSignatureAssociation(m_HitSignature.GetD3D12RootSignature(), { L"HitGroup" });
+
+			pipeline.SetMaxPayloadSize(4 * sizeof(float)); // RGB + distance
+			pipeline.SetMaxAttributeSize(2 * sizeof(float)); // barycentric coordinates
+			pipeline.SetMaxRecursionDepth(1);
+
+			m_rtStateObject = pipeline.Generate();
+
+			if (FAILED(m_rtStateObject->QueryInterface(IID_PPV_ARGS(&m_rtStateObjectProps))))
+				throw std::runtime_error("Failed to query ID3D12StateObjectProperties");
+
+			m_rtStateObject->SetName(L"rtStateObject");
+		}
 	};
 }

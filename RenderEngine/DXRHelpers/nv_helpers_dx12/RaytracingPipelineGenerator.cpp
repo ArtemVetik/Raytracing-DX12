@@ -135,7 +135,7 @@ void RayTracingPipelineGenerator::SetMaxRecursionDepth(UINT maxDepth)
 //--------------------------------------------------------------------------------------------------
 //
 // Compiles the raytracing state object
-ID3D12StateObject* RayTracingPipelineGenerator::Generate()
+Microsoft::WRL::ComPtr<ID3D12StateObject> RayTracingPipelineGenerator::Generate()
 {
   // The pipeline is made of a set of sub-objects, representing the DXIL libraries, hit group
   // declarations, root signature associations, plus some configuration objects
@@ -242,7 +242,7 @@ ID3D12StateObject* RayTracingPipelineGenerator::Generate()
   // The pipeline construction always requires an empty global root signature
   D3D12_STATE_SUBOBJECT globalRootSig;
   globalRootSig.Type = D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_ROOT_SIGNATURE;
-  ID3D12RootSignature* dgSig = m_dummyGlobalRootSignature;
+  ID3D12RootSignature* dgSig = m_dummyGlobalRootSignature.Get();
   globalRootSig.pDesc = &dgSig;
 
   subobjects[currentIndex++] = globalRootSig;
@@ -250,7 +250,7 @@ ID3D12StateObject* RayTracingPipelineGenerator::Generate()
   // The pipeline construction always requires an empty local root signature
   D3D12_STATE_SUBOBJECT dummyLocalRootSig;
   dummyLocalRootSig.Type = D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE;
-  ID3D12RootSignature* dlSig = m_dummyLocalRootSignature;
+  ID3D12RootSignature* dlSig = m_dummyLocalRootSignature.Get();
   dummyLocalRootSig.pDesc = &dlSig;
   subobjects[currentIndex++] = dummyLocalRootSig;
 
@@ -270,7 +270,7 @@ ID3D12StateObject* RayTracingPipelineGenerator::Generate()
   pipelineDesc.NumSubobjects = currentIndex; // static_cast<UINT>(subobjects.size());
   pipelineDesc.pSubobjects = subobjects.data();
 
-  ID3D12StateObject* rtStateObject = nullptr;
+  Microsoft::WRL::ComPtr<ID3D12StateObject> rtStateObject = nullptr;
 
   // Create the state object
   HRESULT hr = m_device->CreateStateObject(&pipelineDesc, IID_PPV_ARGS(&rtStateObject));

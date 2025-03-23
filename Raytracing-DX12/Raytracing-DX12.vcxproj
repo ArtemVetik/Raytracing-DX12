@@ -142,6 +142,20 @@
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\Common.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Shaders\Hit.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Shaders\Miss.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Shaders\RayGen.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

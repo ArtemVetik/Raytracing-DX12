@@ -45,6 +45,7 @@ namespace RaytracingDX12
 		std::unique_ptr<Camera> m_Camera;
 
 		std::unique_ptr<ColorPass> m_ColorPass;
+		std::unique_ptr<RaytracingPass> m_RaytracingPass;
 
 		std::shared_ptr<Texture> m_Texture;
 		std::shared_ptr<Mesh> m_Mesh;

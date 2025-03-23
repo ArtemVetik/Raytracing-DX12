@@ -56,6 +56,7 @@ return rsc.Generate(m_device.Get(), true);
 
 #include <tuple>
 #include <vector>
+#include <wrl/client.h>
 
 namespace nv_helpers_dx12
 {
@@ -103,7 +104,7 @@ public:
                         UINT registerSpace = 0, UINT numRootConstants = 1);
 
   /// Create the root signature from the set of parameters, in the order of the addition calls
-  ID3D12RootSignature* Generate(ID3D12Device* device, bool isLocal);
+  Microsoft::WRL::ComPtr<ID3D12RootSignature> Generate(ID3D12Device* device, bool isLocal);
 
 private:
   /// Heap range descriptors

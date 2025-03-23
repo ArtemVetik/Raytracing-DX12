@@ -67,6 +67,7 @@ rtStateObject = pipeline.Generate();
 
 #include <string>
 #include <vector>
+#include <wrl/client.h>
 
 namespace nv_helpers_dx12
 {
@@ -120,7 +121,7 @@ public:
   void SetMaxRecursionDepth(UINT maxDepth);
 
   /// Compiles the raytracing state object
-  ID3D12StateObject* Generate();
+  Microsoft::WRL::ComPtr<ID3D12StateObject> Generate();
 
 private:
   /// Storage for DXIL libraries and their exported symbols
@@ -188,10 +189,8 @@ private:
   UINT m_maxRecursionDepth = 1;
 
   ID3D12Device5* m_device;
-  ID3D12RootSignature* m_dummyLocalRootSignature;
-  ID3D12RootSignature* m_dummyGlobalRootSignature;
-
-  
+  Microsoft::WRL::ComPtr<ID3D12RootSignature> m_dummyLocalRootSignature;
+  Microsoft::WRL::ComPtr<ID3D12RootSignature> m_dummyGlobalRootSignature;
 };
 
 } // namespace nv_helpers_dx12
