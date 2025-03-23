@@ -55,6 +55,7 @@ namespace RaytracingDX12
 		std::shared_ptr<RenderObject> m_RenderObject;
 
 		std::unique_ptr<AccelerationStructure> m_AccelerationStructure;
+		std::unique_ptr<BufferD3D12> m_MissPadding;
 		std::unique_ptr<TextureD3D12> m_OutputBuffer;
 		nv_helpers_dx12::ShaderBindingTableGenerator m_SbtHelper;
 		std::unique_ptr<UploadBufferD3D12> m_SbtStorage;

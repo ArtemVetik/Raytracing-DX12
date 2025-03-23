@@ -185,10 +185,6 @@ namespace RaytracingDX12
 				D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
 			dCommandContext.FlushResourceBarriers();
 
-			auto AlignUp = [](uint64_t value, uint64_t alignment) {
-				return (value + (alignment - 1)) & ~(alignment - 1);
-			};
-
 			D3D12_DISPATCH_RAYS_DESC desc = {};
 			uint32_t rayGenerationSectionSizeInBytes = m_SbtHelper.GetRayGenSectionSize();
 			uint32_t missSectionSizeInBytes = m_SbtHelper.GetMissSectionSize();
@@ -201,9 +197,7 @@ namespace RaytracingDX12
 			desc.MissShaderTable.SizeInBytes = missSectionSizeInBytes;
 			desc.MissShaderTable.StrideInBytes = m_SbtHelper.GetMissEntrySize();
 
-			desc.HitGroupTable.StartAddress = AlignUp(
-				m_SbtStorage->GetD3D12Resource()->GetGPUVirtualAddress() + rayGenerationSectionSizeInBytes + missSectionSizeInBytes,
-				D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT);
+			desc.HitGroupTable.StartAddress = m_SbtStorage->GetD3D12Resource()->GetGPUVirtualAddress() + rayGenerationSectionSizeInBytes + missSectionSizeInBytes;
 			desc.HitGroupTable.SizeInBytes = hitGroupsSectionSize;
 			desc.HitGroupTable.StrideInBytes = m_SbtHelper.GetHitGroupEntrySize();
 
@@ -239,7 +233,7 @@ namespace RaytracingDX12
 			dCommandContext.GetCmdList()->SetGraphicsRootSignature(m_ColorPass->GetD3D12RootSignature());
 
 			ColorPass::ObjectConstants objConstants;
-			objConstants.World = (SimpleMath::Matrix::CreateScale(0.1f) * SimpleMath::Matrix::CreateRotationY(XM_PI)).Transpose();
+			objConstants.World = SimpleMath::Matrix::CreateScale(100.0f).Transpose();
 
 			ColorPass::PassConstants passConstants;
 			XMStoreFloat4x4(&passConstants.ViewProj, XMMatrixTranspose(m_Camera->GetViewProjMatrix()));
@@ -345,10 +339,16 @@ namespace RaytracingDX12
 		auto outputPointer = reinterpret_cast<UINT64*>(outputHandle.ptr);
 		auto tlasPointer = reinterpret_cast<UINT64*>(tlasHandle.ptr);
 
+		m_MissPadding = std::make_unique<BufferD3D12>(m_Device.get(), CD3DX12_RESOURCE_DESC::Buffer(4 * sizeof(XMFLOAT4)), QueueID::Direct);
+
 		m_SbtHelper.Reset();
 		m_SbtHelper.AddRayGenerationProgram(L"RayGen", { outputPointer, tlasPointer });
-		m_SbtHelper.AddMissProgram(L"Miss", {});
-		m_SbtHelper.AddHitGroup(L"HitGroup", {});
+		m_SbtHelper.AddMissProgram(L"Miss", { (void*)m_MissPadding->GetD3D12Resource()->GetGPUVirtualAddress() });
+		m_SbtHelper.AddHitGroup(L"HitGroup", 
+			{ 
+				(void*)m_Mesh->GetVertexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
+				(void*)m_Mesh->GetIndexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
+			});
 
 		uint32_t sbtSize = m_SbtHelper.ComputeSBTSize();
 

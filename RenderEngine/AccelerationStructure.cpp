@@ -104,5 +104,9 @@ namespace RaytracingDX12
 			m_TopLevelASBuffers.pScratch.Get(),
 			m_TopLevelASBuffers.pResult.Get(),
 			m_TopLevelASBuffers.pInstanceDesc.Get());
+
+		m_TopLevelASBuffers.pScratch->SetName(L"TopLevelAS_Scratch");
+		m_TopLevelASBuffers.pResult->SetName(L"TopLevelAS_Result");
+		m_TopLevelASBuffers.pInstanceDesc->SetName(L"TopLevelAS_InstanceDesc");
 	}
 }
