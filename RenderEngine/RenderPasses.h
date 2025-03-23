@@ -97,6 +97,13 @@ namespace RaytracingDX12
 
 			m_RayGenSignature.Build(device, QueueID::Direct, true);
 			m_RayGenSignature.SetName(L"RayGenSignature");
+			
+			m_HitSignature.AddShaderResourceView(0); // vertex buffer
+			m_HitSignature.AddShaderResourceView(1); // index buffer
+
+			CD3DX12_DESCRIPTOR_RANGE albedoTex;
+			albedoTex.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2);
+			m_HitSignature.AddDescriptorParameter(1, &albedoTex); // albedo texture
 
 			m_HitSignature.Build(device, QueueID::Direct, true);
 			m_HitSignature.SetName(L"HitSignature");

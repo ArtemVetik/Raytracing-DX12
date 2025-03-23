@@ -352,6 +352,7 @@ namespace RaytracingDX12
 			{ 
 				(void*)m_Mesh->GetVertexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
 				(void*)m_Mesh->GetIndexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
+				(void*)m_Texture->GetGPUPtr(),
 			});
 
 		uint32_t sbtSize = m_SbtHelper.ComputeSBTSize();

@@ -29,6 +29,13 @@ namespace EduEngine
 		m_SlotParameters.emplace_back(slotParameter);
 	}
 
+	void RootSignatureD3D12::AddShaderResourceView(UINT shaderRegister, UINT registerSpace, D3D12_SHADER_VISIBILITY visibility)
+	{
+		CD3DX12_ROOT_PARAMETER slotParameter;
+		slotParameter.InitAsShaderResourceView(shaderRegister, registerSpace, visibility);
+		m_SlotParameters.emplace_back(slotParameter);
+	}
+
 	void RootSignatureD3D12::AddDescriptorParameter(UINT					  size,
 													CD3DX12_DESCRIPTOR_RANGE* rangeParameters,
 													D3D12_SHADER_VISIBILITY	  visibility /* = D3D12_SHADER_VISIBILITY_ALL */)
