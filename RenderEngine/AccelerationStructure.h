@@ -23,6 +23,8 @@ namespace RaytracingDX12
 		/// Create all acceleration structures, bottom and top
 		void CreateAccelerationStructures(Mesh* mesh);
 
+		BufferHeapView* GetSrvView() const { return m_SrvView.get(); }
+
 	private:
 		struct AccelerationStructureBuffers
 		{
@@ -42,15 +44,13 @@ namespace RaytracingDX12
 		/// \param     instances : pair of BLAS and transform
 		void CreateTopLevelAS(const std::vector<std::pair<ComPtr<ID3D12Resource>, DirectX::XMMATRIX>>& instances);
 
-		BufferHeapView* GetSrvView() const { return m_SrvView.get(); }
-
 	private:
 		RenderDeviceD3D12* m_Device;
-		ComPtr<ID3D12Resource> m_bottomLevelAS;
+		ComPtr<ID3D12Resource> m_BottomLevelAS;
 
-		nv_helpers_dx12::TopLevelASGenerator m_topLevelASGenerator;
-		AccelerationStructureBuffers m_topLevelASBuffers;
-		std::vector<std::pair<ComPtr<ID3D12Resource>, DirectX::XMMATRIX>> m_instances;
+		nv_helpers_dx12::TopLevelASGenerator m_TopLevelASGenerator;
+		AccelerationStructureBuffers m_TopLevelASBuffers;
+		std::vector<std::pair<ComPtr<ID3D12Resource>, DirectX::XMMATRIX>> m_Instances;
 
 		std::unique_ptr<BufferHeapView> m_SrvView;
 	};

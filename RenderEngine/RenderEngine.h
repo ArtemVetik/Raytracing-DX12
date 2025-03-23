@@ -9,6 +9,7 @@
 #include "AccelerationStructure.h"
 
 #include "../Core/Graphics/SwapChain.h"
+#include "DXRHelpers/nv_helpers_dx12/ShaderBindingTableGenerator.h"
 
 #pragma comment(lib, "D3D12.lib")
 #pragma comment(lib, "dxgi.lib")
@@ -54,6 +55,8 @@ namespace RaytracingDX12
 
 		std::unique_ptr<AccelerationStructure> m_AccelerationStructure;
 		std::unique_ptr<TextureD3D12> m_OutputBuffer;
+		nv_helpers_dx12::ShaderBindingTableGenerator m_SbtHelper;
+		std::unique_ptr<UploadBufferD3D12> m_SbtStorage;
 
 		D3D12_VIEWPORT m_Viewport;
 		D3D12_RECT m_ScissorRect;

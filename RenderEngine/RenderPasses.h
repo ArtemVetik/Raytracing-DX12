@@ -78,8 +78,8 @@ namespace RaytracingDX12
 		RootSignatureD3D12 m_HitSignature;
 		RootSignatureD3D12 m_MissSignature;
 
-		ComPtr<ID3D12StateObject> m_rtStateObject;
-		ComPtr<ID3D12StateObjectProperties> m_rtStateObjectProps;
+		ComPtr<ID3D12StateObject> m_RtStateObject;
+		ComPtr<ID3D12StateObjectProperties> m_RtStateObjectProps;
 
 	public:
 		RaytracingPass(RenderDeviceD3D12* device, const LPCWSTR* macros = nullptr) :
@@ -120,12 +120,14 @@ namespace RaytracingDX12
 			pipeline.SetMaxAttributeSize(2 * sizeof(float)); // barycentric coordinates
 			pipeline.SetMaxRecursionDepth(1);
 
-			m_rtStateObject = pipeline.Generate();
+			m_RtStateObject = pipeline.Generate();
 
-			if (FAILED(m_rtStateObject->QueryInterface(IID_PPV_ARGS(&m_rtStateObjectProps))))
+			if (FAILED(m_RtStateObject->QueryInterface(IID_PPV_ARGS(&m_RtStateObjectProps))))
 				throw std::runtime_error("Failed to query ID3D12StateObjectProperties");
 
-			m_rtStateObject->SetName(L"rtStateObject");
+			m_RtStateObject->SetName(L"rtStateObject");
 		}
+
+		ID3D12StateObjectProperties* GetRtStateObjectProps() const { return m_RtStateObjectProps.Get(); }
 	};
 }

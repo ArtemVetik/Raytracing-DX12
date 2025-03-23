@@ -15,8 +15,8 @@ namespace RaytracingDX12
 	{
 		AccelerationStructureBuffers bottomLevelBuffers = CreateBottomLevelAS({ mesh });
 
-		m_instances = { {bottomLevelBuffers.pResult, DirectX::XMMatrixIdentity()} };
-		CreateTopLevelAS(m_instances);
+		m_Instances = { {bottomLevelBuffers.pResult, DirectX::XMMatrixIdentity()} };
+		CreateTopLevelAS(m_Instances);
 
 		auto& commandContext = m_Device->GetCommandContext(D3D12_COMMAND_LIST_TYPE_DIRECT);
 		auto& commandQueue = m_Device->GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
@@ -26,13 +26,13 @@ namespace RaytracingDX12
 
 		commandContext.Reset();
 
-		m_bottomLevelAS = bottomLevelBuffers.pResult;
+		m_BottomLevelAS = bottomLevelBuffers.pResult;
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc;
 		srvDesc.Format = DXGI_FORMAT_UNKNOWN;
 		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
 		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-		srvDesc.RaytracingAccelerationStructure.Location = m_topLevelASBuffers.pResult->GetGPUVirtualAddress();
+		srvDesc.RaytracingAccelerationStructure.Location = m_TopLevelASBuffers.pResult->GetGPUVirtualAddress();
 		
 		auto allocation = m_Device->AllocateGPUDescriptor(QueueID::Direct, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1);
 		m_Device->GetD3D12Device()->CreateShaderResourceView(nullptr, &srvDesc, allocation.GetCpuHandle());
@@ -75,7 +75,7 @@ namespace RaytracingDX12
 	{
 		for (size_t i = 0; i < instances.size(); i++)
 		{
-			m_topLevelASGenerator.AddInstance(
+			m_TopLevelASGenerator.AddInstance(
 				instances[i].first.Get(),
 				instances[i].second,
 				static_cast<UINT>(i),
@@ -85,24 +85,24 @@ namespace RaytracingDX12
 
 		UINT64 scratchSize, resultSize, instanceDescsSize;
 
-		m_topLevelASGenerator.ComputeASBufferSizes(m_Device->GetD3D12Device(), true, &scratchSize, &resultSize, &instanceDescsSize);
+		m_TopLevelASGenerator.ComputeASBufferSizes(m_Device->GetD3D12Device(), true, &scratchSize, &resultSize, &instanceDescsSize);
 
-		m_topLevelASBuffers.pScratch = nv_helpers_dx12::CreateBuffer(
+		m_TopLevelASBuffers.pScratch = nv_helpers_dx12::CreateBuffer(
 			m_Device->GetD3D12Device(), scratchSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
 			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
 			nv_helpers_dx12::kDefaultHeapProps);
-		m_topLevelASBuffers.pResult = nv_helpers_dx12::CreateBuffer(
+		m_TopLevelASBuffers.pResult = nv_helpers_dx12::CreateBuffer(
 			m_Device->GetD3D12Device(), resultSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
 			D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
 			nv_helpers_dx12::kDefaultHeapProps);
 
-		m_topLevelASBuffers.pInstanceDesc = nv_helpers_dx12::CreateBuffer(
+		m_TopLevelASBuffers.pInstanceDesc = nv_helpers_dx12::CreateBuffer(
 			m_Device->GetD3D12Device(), instanceDescsSize, D3D12_RESOURCE_FLAG_NONE,
 			D3D12_RESOURCE_STATE_GENERIC_READ, nv_helpers_dx12::kUploadHeapProps);
 
-		m_topLevelASGenerator.Generate(m_Device->GetCommandContext(D3D12_COMMAND_LIST_TYPE_DIRECT).GetCmdList(),
-			m_topLevelASBuffers.pScratch.Get(),
-			m_topLevelASBuffers.pResult.Get(),
-			m_topLevelASBuffers.pInstanceDesc.Get());
+		m_TopLevelASGenerator.Generate(m_Device->GetCommandContext(D3D12_COMMAND_LIST_TYPE_DIRECT).GetCmdList(),
+			m_TopLevelASBuffers.pScratch.Get(),
+			m_TopLevelASBuffers.pResult.Get(),
+			m_TopLevelASBuffers.pInstanceDesc.Get());
 	}
 }

@@ -107,6 +107,39 @@ namespace RaytracingDX12
 		m_AccelerationStructure = std::make_unique<AccelerationStructure>(m_Device.get());
 		m_AccelerationStructure->CreateAccelerationStructures(m_Mesh.get());
 
+		auto outputHandle = m_OutputBuffer->GetUAVView()->GetGpuHandle();
+		auto tlasHandle = m_AccelerationStructure->GetSrvView()->GetGpuHandle();
+
+		auto outputPointer = reinterpret_cast<UINT64*>(outputHandle.ptr);
+		auto tlasPointer = reinterpret_cast<UINT64*>(tlasHandle.ptr);
+
+		m_SbtHelper.Reset();
+		m_SbtHelper.AddRayGenerationProgram(L"RayGen", { outputPointer, tlasPointer });
+		m_SbtHelper.AddMissProgram(L"Miss", {});
+		m_SbtHelper.AddHitGroup(L"HitGroup", {});
+
+		uint32_t sbtSize = m_SbtHelper.ComputeSBTSize();
+
+		D3D12_RESOURCE_DESC bufDesc = {};
+		bufDesc.Alignment = 0;
+		bufDesc.DepthOrArraySize = 1;
+		bufDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+		bufDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+		bufDesc.Format = DXGI_FORMAT_UNKNOWN;
+		bufDesc.Height = 1;
+		bufDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+		bufDesc.MipLevels = 1;
+		bufDesc.SampleDesc.Count = 1;
+		bufDesc.SampleDesc.Quality = 0;
+		bufDesc.Width = sbtSize;
+
+		m_SbtStorage = std::make_unique<UploadBufferD3D12>(m_Device.get(), bufDesc, QueueID::Direct);
+		
+		if (!m_SbtStorage)
+			throw std::logic_error("Could not allocate the shader binding table");
+
+		m_SbtHelper.Generate(m_SbtStorage->GetD3D12Resource(), m_RaytracingPass->GetRtStateObjectProps());
+
 		return true;
 	}
 
