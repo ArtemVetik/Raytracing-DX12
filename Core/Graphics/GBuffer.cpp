@@ -97,12 +97,12 @@ namespace EduEngine
 
 	D3D12_CPU_DESCRIPTOR_HANDLE GBuffer::GetGBufferRTVView(int index) const
 	{
-		return m_GBuffers[index]->GetView(D3D12_DESCRIPTOR_HEAP_TYPE_RTV)->GetCpuHandle();
+		return m_GBuffers[index]->GetRTVView()->GetCpuHandle();
 	}
 
 	D3D12_GPU_DESCRIPTOR_HANDLE GBuffer::GetGBufferSRVView(int index) const
 	{
-		return m_GBuffers[index]->GetView(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->GetGpuHandle();
+		return m_GBuffers[index]->GetSRVView()->GetGpuHandle();
 	}
 
 	ID3D12Resource* GBuffer::GetAccumBuffer(int index) const
@@ -112,11 +112,11 @@ namespace EduEngine
 
 	D3D12_CPU_DESCRIPTOR_HANDLE GBuffer::GetAccumBuffRTVView(int index) const
 	{
-		return m_AccumBuffer[index]->GetView(D3D12_DESCRIPTOR_HEAP_TYPE_RTV)->GetCpuHandle();
+		return m_AccumBuffer[index]->GetRTVView()->GetCpuHandle();
 	}
 
 	D3D12_GPU_DESCRIPTOR_HANDLE GBuffer::GetAccumBuffSRVView(int index) const
 	{
-		return m_AccumBuffer[index]->GetView(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->GetGpuHandle();
+		return m_AccumBuffer[index]->GetSRVView()->GetGpuHandle();
 	}
 }

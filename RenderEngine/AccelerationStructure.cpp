@@ -27,12 +27,22 @@ namespace RaytracingDX12
 		commandContext.Reset();
 
 		m_bottomLevelAS = bottomLevelBuffers.pResult;
+
+		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc;
+		srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
+		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		srvDesc.RaytracingAccelerationStructure.Location = m_topLevelASBuffers.pResult->GetGPUVirtualAddress();
+		
+		auto allocation = m_Device->AllocateGPUDescriptor(QueueID::Direct, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1);
+		m_Device->GetD3D12Device()->CreateShaderResourceView(nullptr, &srvDesc, allocation.GetCpuHandle());
+		m_SrvView = std::make_unique<BufferHeapView>(std::move(allocation));
 	}
 
 	AccelerationStructure::AccelerationStructureBuffers AccelerationStructure::CreateBottomLevelAS(std::vector<Mesh*> meshes)
 	{
 		nv_helpers_dx12::BottomLevelASGenerator bottomLevelAS;
-
+		
 		for (const auto& mesh : meshes)
 		{
 			bottomLevelAS.AddVertexBuffer(mesh->GetVertexBuffer()->GetD3D12Resource(), 0, mesh->GetVertexCount(), sizeof(Vertex),

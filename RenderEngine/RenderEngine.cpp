@@ -248,6 +248,24 @@ namespace RaytracingDX12
 		commandContext.Reset();
 		m_SwapChain->Resize(w, h);
 
+		D3D12_RESOURCE_DESC resDesc = {};
+		resDesc.DepthOrArraySize = 1;
+		resDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+		resDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		resDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+		resDesc.Width = w;
+		resDesc.Height = h;
+		resDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+		resDesc.MipLevels = 1;
+		resDesc.SampleDesc.Count = 1;
+
+		D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+		uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+
+		m_OutputBuffer = std::make_unique<TextureD3D12>(m_Device.get(), resDesc, nullptr, QueueID::Direct);
+		m_OutputBuffer->CreateUAVView(&uavDesc);
+		m_OutputBuffer->SetName(L"RayOutputBuffer");
+
 		commandContext.FlushResourceBarriers();
 		commandQueue.CloseAndExecuteCommandContext(&commandContext);
 

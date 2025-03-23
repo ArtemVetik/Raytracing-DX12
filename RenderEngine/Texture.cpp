@@ -82,7 +82,7 @@ namespace RaytracingDX12
 	void* Texture::GetGPUPtr()
 	{
 		if (m_Texture.get())
-			return reinterpret_cast<void*>(m_Texture->GetView(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->GetGpuHandle().ptr);
+			return reinterpret_cast<void*>(m_Texture->GetSRVView()->GetGpuHandle().ptr);
 
 		return nullptr;
 	}

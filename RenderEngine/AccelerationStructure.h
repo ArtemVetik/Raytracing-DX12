@@ -42,6 +42,8 @@ namespace RaytracingDX12
 		/// \param     instances : pair of BLAS and transform
 		void CreateTopLevelAS(const std::vector<std::pair<ComPtr<ID3D12Resource>, DirectX::XMMATRIX>>& instances);
 
+		BufferHeapView* GetSrvView() const { return m_SrvView.get(); }
+
 	private:
 		RenderDeviceD3D12* m_Device;
 		ComPtr<ID3D12Resource> m_bottomLevelAS;
@@ -49,5 +51,7 @@ namespace RaytracingDX12
 		nv_helpers_dx12::TopLevelASGenerator m_topLevelASGenerator;
 		AccelerationStructureBuffers m_topLevelASBuffers;
 		std::vector<std::pair<ComPtr<ID3D12Resource>, DirectX::XMMATRIX>> m_instances;
+
+		std::unique_ptr<BufferHeapView> m_SrvView;
 	};
 }

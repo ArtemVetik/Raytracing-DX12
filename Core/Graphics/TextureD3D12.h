@@ -42,16 +42,21 @@ namespace EduEngine
 
 		void LoadData(void* dataPtr);
 
+		void CreateUAVView(const D3D12_UNORDERED_ACCESS_VIEW_DESC* uavDesc);
 		void CreateSRVView(const D3D12_SHADER_RESOURCE_VIEW_DESC* srvDesc, bool onCpu);
 		void CreateRTVView(const D3D12_RENDER_TARGET_VIEW_DESC* rtvDesc, bool onCpu);
 		void CreateDSVView(const D3D12_DEPTH_STENCIL_VIEW_DESC* dsvDesc, bool onCpu);
 
-		TextureHeapView* GetView(const D3D12_DESCRIPTOR_HEAP_TYPE& type) const;
+		TextureHeapView* GetUAVView() const { return m_UavView.get(); }
+		TextureHeapView* GetSRVView() const { return m_SrvView.get(); }
+		TextureHeapView* GetRTVView() const { return m_RtvView.get(); }
+		TextureHeapView* GetDSVView() const { return m_DsvView.get(); }
 
 	private:
 		DescriptorHeapAllocation Allocate(const D3D12_DESCRIPTOR_HEAP_TYPE& type, bool onCpu);
 
 	private:
+		std::unique_ptr<TextureHeapView> m_UavView;
 		std::unique_ptr<TextureHeapView> m_SrvView;
 		std::unique_ptr<TextureHeapView> m_RtvView;
 		std::unique_ptr<TextureHeapView> m_DsvView;

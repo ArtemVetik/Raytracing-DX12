@@ -206,16 +206,16 @@ namespace EduEngine
 
 	D3D12_CPU_DESCRIPTOR_HANDLE SwapChain::CurrentBackBufferView() const
 	{
-		return m_SwapChainBuffers[m_CurrentBackBuffer]->GetView(D3D12_DESCRIPTOR_HEAP_TYPE_RTV)->GetCpuHandle();
+		return m_SwapChainBuffers[m_CurrentBackBuffer]->GetRTVView()->GetCpuHandle();
 	}
 
 	D3D12_CPU_DESCRIPTOR_HANDLE SwapChain::DepthStencilView() const
 	{
-		return m_DepthStencilTexture->GetView(D3D12_DESCRIPTOR_HEAP_TYPE_DSV)->GetCpuHandle();
+		return m_DepthStencilTexture->GetDSVView()->GetCpuHandle();
 	}
 
 	D3D12_GPU_DESCRIPTOR_HANDLE SwapChain::DepthStencilSRVView() const
 	{
-		return m_DepthStencilTexture->GetView(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->GetGpuHandle();
+		return m_DepthStencilTexture->GetSRVView()->GetGpuHandle();
 	}
 }

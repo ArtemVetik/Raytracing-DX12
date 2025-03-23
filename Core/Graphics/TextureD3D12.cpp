@@ -74,6 +74,13 @@ namespace EduEngine
 		m_Device->GetCommandContext(D3D12_COMMAND_LIST_TYPE_DIRECT).GetCmdList()->CopyTextureRegion(&dst, 0, 0, 0, &src, nullptr);
 	}
 
+	void TextureD3D12::CreateUAVView(const D3D12_UNORDERED_ACCESS_VIEW_DESC* uavDesc)
+	{
+		DescriptorHeapAllocation allocation = std::move(Allocate(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, false));
+		m_Device->GetD3D12Device()->CreateUnorderedAccessView(m_d3d12Resource.Get(), nullptr, uavDesc, allocation.GetCpuHandle());
+		m_UavView = std::make_unique<TextureHeapView>(std::move(allocation), false);
+	}
+
 	void TextureD3D12::CreateSRVView(const D3D12_SHADER_RESOURCE_VIEW_DESC* srvDesc, bool onCpu)
 	{
 		DescriptorHeapAllocation allocation = std::move(Allocate(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, onCpu));
@@ -93,18 +100,6 @@ namespace EduEngine
 		DescriptorHeapAllocation allocation = std::move(Allocate(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, onCpu));
 		m_Device->GetD3D12Device()->CreateDepthStencilView(m_d3d12Resource.Get(), dsvDesc, allocation.GetCpuHandle());
 		m_DsvView = std::make_unique<TextureHeapView>(std::move(allocation), onCpu);
-	}
-
-	TextureHeapView* TextureD3D12::GetView(const D3D12_DESCRIPTOR_HEAP_TYPE& type) const
-	{
-		switch (type)
-		{
-		case D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV: return m_SrvView.get();
-		case D3D12_DESCRIPTOR_HEAP_TYPE_RTV: return m_RtvView.get();
-		case D3D12_DESCRIPTOR_HEAP_TYPE_DSV: return m_DsvView.get();
-		}
-
-		assert(1);
 	}
 
 	DescriptorHeapAllocation TextureD3D12::Allocate(const D3D12_DESCRIPTOR_HEAP_TYPE& type, bool onCpu)
