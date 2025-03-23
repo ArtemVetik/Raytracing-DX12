@@ -36,6 +36,7 @@ namespace RaytracingDX12
 
 	private:
 		void Resize(UINT w, UINT h);
+		void ResizeOutputBuffer();
 
 	private:
 		static RenderEngine* m_Instance;
