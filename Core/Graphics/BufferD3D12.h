@@ -127,6 +127,14 @@ namespace EduEngine
 		UploadBufferD3D12(RenderDeviceD3D12*		 pDevice,
 						  const D3D12_RESOURCE_DESC& desc,
 						  QueueID					 queueId);
+
+		void LoadData(void* data);
+		void CreateCBV();
+
+		BufferHeapView* GetCBVView() const { return m_CbvView.get(); }
+
+	private:
+		std::unique_ptr<BufferHeapView> m_CbvView;
 	};
 }
 

@@ -95,6 +95,8 @@ namespace RaytracingDX12
 			tlas.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
 			m_RayGenSignature.AddDescriptorParameter(1, &tlas); // TLAS
 
+			m_RayGenSignature.AddConstantBufferView(0); // camera
+
 			m_RayGenSignature.Build(device, QueueID::Direct, true);
 			m_RayGenSignature.SetName(L"RayGenSignature");
 			

@@ -15,7 +15,7 @@ namespace RaytracingDX12
 	}
 
 	RenderEngine::RenderEngine() :
-		m_Raster(true),
+		m_Raster(false),
 		m_Viewport{},
 		m_ScissorRect{}
 	{
@@ -108,6 +108,22 @@ namespace RaytracingDX12
 		m_AccelerationStructure = std::make_unique<AccelerationStructure>(m_Device.get());
 		m_AccelerationStructure->CreateAccelerationStructures(m_Mesh.get());
 
+		D3D12_RESOURCE_DESC camBuff = {};
+		camBuff.Alignment = 0;
+		camBuff.DepthOrArraySize = 1;
+		camBuff.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+		camBuff.Flags = D3D12_RESOURCE_FLAG_NONE;
+		camBuff.Format = DXGI_FORMAT_UNKNOWN;
+		camBuff.Height = 1;
+		camBuff.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+		camBuff.MipLevels = 1;
+		camBuff.SampleDesc.Count = 1;
+		camBuff.SampleDesc.Quality = 0;
+		camBuff.Width = 4 * sizeof(XMFLOAT4X4);
+
+		m_CameraUpload = std::make_unique<UploadBufferD3D12>(m_Device.get(), camBuff, QueueID::Direct);
+		m_CameraUpload->SetName(L"CameraBuffer");
+
 		ResizeOutputBuffer();
 
 		return true;
@@ -166,6 +182,16 @@ namespace RaytracingDX12
 		m_Camera->Pitch(currentDelta.y - prevY);
 
 		m_Camera->Update(timer);
+
+		XMMATRIX matrices[4]
+		{
+			XMMatrixTranspose(XMLoadFloat4x4(&m_Camera->GetViewMatrix())),
+			XMMatrixTranspose(XMLoadFloat4x4(&m_Camera->GetProjectionMatrix())),
+			XMMatrixInverse(nullptr, XMLoadFloat4x4(&m_Camera->GetViewMatrix())),
+			XMMatrixInverse(nullptr, XMLoadFloat4x4(&m_Camera->GetProjectionMatrix()))
+		};
+
+		m_CameraUpload->LoadData(&matrices);
 	}
 
 	void RenderEngine::Render()
@@ -237,7 +263,7 @@ namespace RaytracingDX12
 			dCommandContext.GetCmdList()->SetGraphicsRootSignature(m_ColorPass->GetD3D12RootSignature());
 
 			ColorPass::ObjectConstants objConstants;
-			objConstants.World = SimpleMath::Matrix::CreateScale(100.0f).Transpose();
+			objConstants.World = SimpleMath::Matrix::Identity.Transpose();
 
 			ColorPass::PassConstants passConstants;
 			XMStoreFloat4x4(&passConstants.ViewProj, XMMatrixTranspose(m_Camera->GetViewProjMatrix()));
@@ -346,7 +372,7 @@ namespace RaytracingDX12
 		m_MissPadding = std::make_unique<BufferD3D12>(m_Device.get(), CD3DX12_RESOURCE_DESC::Buffer(4 * sizeof(XMFLOAT4)), QueueID::Direct);
 
 		m_SbtHelper.Reset();
-		m_SbtHelper.AddRayGenerationProgram(L"RayGen", { outputPointer, tlasPointer });
+		m_SbtHelper.AddRayGenerationProgram(L"RayGen", { outputPointer, tlasPointer, (void*)m_CameraUpload->GetD3D12Resource()->GetGPUVirtualAddress() });
 		m_SbtHelper.AddMissProgram(L"Miss", { (void*)m_MissPadding->GetD3D12Resource()->GetGPUVirtualAddress() });
 		m_SbtHelper.AddHitGroup(L"HitGroup", 
 			{ 

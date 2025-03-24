@@ -1,9 +1,14 @@
 #include "Common.hlsl"
 
-// Raytracing output texture, accessed as a UAV
-RWTexture2D<float4> gOutput : register(u0);
+cbuffer gCameraCB : register(b0)
+{
+    float4x4 gView;
+    float4x4 gProjection;
+    float4x4 gViewInv;
+    float4x4 gProjectionInv;
+}
 
-// Raytracing acceleration structure, accessed as a SRV
+RWTexture2D<float4> gOutput : register(u0);
 RaytracingAccelerationStructure SceneBVH : register(t0);
 
 [shader("raygeneration")]
@@ -18,10 +23,11 @@ void RayGen()
     float2 dims = float2(DispatchRaysDimensions().xy);
     float2 d = (((launchIndex.xy + 0.5f) / dims.xy) * 2.f - 1.f);
     
-    // Define a ray, consisting of origin, direction, and the min-max distance values
     RayDesc ray;
-    ray.Origin = float3(d.x, -d.y + 0, -150);
-    ray.Direction = float3(0, 0, 1);
+    ray.Origin = mul(gViewInv, float4(0, 0, 0, 1));
+    float4 target = mul(gProjectionInv, float4(d.x, -d.y, 1, 1));
+    ray.Direction = mul(gViewInv, float4(target.xyz, 0));
+    
     ray.TMin = 0;
     ray.TMax = 100000;
     

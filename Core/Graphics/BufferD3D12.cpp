@@ -159,4 +159,25 @@ namespace EduEngine
 
 		m_d3d12Resource->SetName(L"UploadBufferD3D12");
 	}
+
+	void UploadBufferD3D12::LoadData(void* data)
+	{
+		uint8_t* pData;
+
+		m_d3d12Resource->Map(0, nullptr, (void**)&pData);
+		memcpy(pData, data, m_d3d12Resource->GetDesc().Width);
+		m_d3d12Resource->Unmap(0, nullptr);
+	}
+
+	void UploadBufferD3D12::CreateCBV()
+	{
+		DescriptorHeapAllocation allocation = m_Device->AllocateGPUDescriptor(m_QueueId, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1);
+
+		D3D12_CONSTANT_BUFFER_VIEW_DESC desc;
+		desc.BufferLocation = m_d3d12Resource->GetGPUVirtualAddress();
+		desc.SizeInBytes = m_d3d12Resource->GetDesc().Width;
+
+		m_Device->GetD3D12Device()->CreateConstantBufferView(&desc, allocation.GetCpuHandle());
+		m_CbvView = std::make_unique<BufferHeapView>(std::move(allocation));
+	}
 }
