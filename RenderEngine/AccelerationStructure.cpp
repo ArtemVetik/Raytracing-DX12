@@ -11,11 +11,16 @@ namespace RaytracingDX12
 	{
 	}
 
-	void AccelerationStructure::CreateAccelerationStructures(Mesh* mesh)
+	void AccelerationStructure::CreateAccelerationStructures(Mesh* mesh, Mesh* planeMesh)
 	{
 		AccelerationStructureBuffers bottomLevelBuffers = CreateBottomLevelAS({ mesh });
+		AccelerationStructureBuffers planeBottomLevelBuffers = CreateBottomLevelAS({ planeMesh });
 
-		m_Instances = { {bottomLevelBuffers.pResult, DirectX::XMMatrixIdentity()} };
+		m_Instances = {
+			{bottomLevelBuffers.pResult, DirectX::XMMatrixScaling(2.0f, 2.0f, 2.0f)},
+			{planeBottomLevelBuffers.pResult, DirectX::XMMatrixMultiply(DirectX::XMMatrixScaling(0.1f, 0.1f, 0.1f), DirectX::XMMatrixTranslation(0, -1, 0))},
+		};
+
 		CreateTopLevelAS(m_Instances);
 
 		auto& commandContext = m_Device->GetCommandContext(D3D12_COMMAND_LIST_TYPE_DIRECT);
@@ -33,7 +38,7 @@ namespace RaytracingDX12
 		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
 		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 		srvDesc.RaytracingAccelerationStructure.Location = m_TopLevelASBuffers.pResult->GetGPUVirtualAddress();
-		
+
 		auto allocation = m_Device->AllocateGPUDescriptor(QueueID::Direct, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1);
 		m_Device->GetD3D12Device()->CreateShaderResourceView(nullptr, &srvDesc, allocation.GetCpuHandle());
 		m_SrvView = std::make_unique<BufferHeapView>(std::move(allocation));
@@ -42,7 +47,7 @@ namespace RaytracingDX12
 	AccelerationStructure::AccelerationStructureBuffers AccelerationStructure::CreateBottomLevelAS(std::vector<Mesh*> meshes)
 	{
 		nv_helpers_dx12::BottomLevelASGenerator bottomLevelAS;
-		
+
 		for (const auto& mesh : meshes)
 		{
 			bottomLevelAS.AddVertexBuffer(mesh->GetVertexBuffer()->GetD3D12Resource(), 0, mesh->GetVertexCount(), sizeof(Vertex),
@@ -79,7 +84,7 @@ namespace RaytracingDX12
 				instances[i].first.Get(),
 				instances[i].second,
 				static_cast<UINT>(i),
-				static_cast<UINT>(0)
+				static_cast<UINT>(i)
 			);
 		}
 

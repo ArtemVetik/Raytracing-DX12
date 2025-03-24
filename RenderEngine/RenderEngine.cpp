@@ -96,17 +96,30 @@ namespace RaytracingDX12
 		m_Mesh = std::make_shared<Mesh>(m_Device.get(), "Models\\joseph.fbx");
 		m_Mesh->Load();
 
+		m_PlaneMesh = std::make_shared<Mesh>(m_Device.get(), "Models\\plane.fbx");
+		m_PlaneMesh->Load();
+
 		m_Texture = std::make_unique<Texture>(m_Device.get(), L"Textures\\principledshader_albedo.dds");
+		m_PlaneTexture = std::make_unique<Texture>(m_Device.get(), L"Textures\\Floortile1Color.dds");
+		
 		m_Material = std::make_shared<Material>();
 		m_Material->SetMainTexture(m_Texture.get());
 		m_Material->Load();
+		
+		m_PlaneMaterial = std::make_shared<Material>();
+		m_PlaneMaterial->SetMainTexture(m_PlaneTexture.get());
+		m_PlaneMaterial->Load();
 
 		m_RenderObject = std::make_shared<RenderObject>();
 		m_RenderObject->SetMaterial(m_Material.get());
 		m_RenderObject->SetMesh(m_Mesh.get());
 
+		m_PlaneRenderObject = std::make_shared<RenderObject>();
+		m_PlaneRenderObject->SetMaterial(m_PlaneMaterial.get());
+		m_PlaneRenderObject->SetMesh(m_PlaneMesh.get());
+
 		m_AccelerationStructure = std::make_unique<AccelerationStructure>(m_Device.get());
-		m_AccelerationStructure->CreateAccelerationStructures(m_Mesh.get());
+		m_AccelerationStructure->CreateAccelerationStructures(m_Mesh.get(), m_PlaneMesh.get());
 
 		D3D12_RESOURCE_DESC camBuff = {};
 		camBuff.Alignment = 0;
@@ -263,7 +276,7 @@ namespace RaytracingDX12
 			dCommandContext.GetCmdList()->SetGraphicsRootSignature(m_ColorPass->GetD3D12RootSignature());
 
 			ColorPass::ObjectConstants objConstants;
-			objConstants.World = SimpleMath::Matrix::Identity.Transpose();
+			objConstants.World = SimpleMath::Matrix::CreateScale(2.0f).Transpose();
 
 			ColorPass::PassConstants passConstants;
 			XMStoreFloat4x4(&passConstants.ViewProj, XMMatrixTranspose(m_Camera->GetViewProjMatrix()));
@@ -285,6 +298,19 @@ namespace RaytracingDX12
 			dCommandContext.GetCmdList()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 			dCommandContext.GetCmdList()->DrawIndexedInstanced(m_RenderObject->GetIndexBuffer()->GetLength(), 1, 0, 0, 0);
+
+			objConstants.World = (SimpleMath::Matrix::CreateScale(0.1f) * SimpleMath::Matrix::CreateTranslation(0, -1, 0)).Transpose();
+			DynamicUploadBuffer planeObjBuffer(m_Device.get(), QueueID::Direct);
+			planeObjBuffer.LoadData(objConstants);
+
+			albedoTex.ptr = reinterpret_cast<UINT64>(m_PlaneTexture->GetGPUPtr());
+			dCommandContext.GetCmdList()->SetGraphicsRootDescriptorTable(0, albedoTex);
+			dCommandContext.GetCmdList()->SetGraphicsRootConstantBufferView(1, planeObjBuffer.GetAllocation().GPUAddress);
+
+			dCommandContext.GetCmdList()->IASetVertexBuffers(0, 1, &(m_PlaneRenderObject->GetVertexBuffer()->GetView()));
+			dCommandContext.GetCmdList()->IASetIndexBuffer(&(m_PlaneRenderObject->GetIndexBuffer()->GetView()));
+
+			dCommandContext.GetCmdList()->DrawIndexedInstanced(m_PlaneRenderObject->GetIndexBuffer()->GetLength(), 1, 0, 0, 0);
 		}
 
 		dCommandContext.ResourceBarrier(CD3DX12_RESOURCE_BARRIER::Transition(m_SwapChain->CurrentBackBuffer(),
@@ -379,6 +405,13 @@ namespace RaytracingDX12
 				(void*)m_Mesh->GetVertexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
 				(void*)m_Mesh->GetIndexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
 				(void*)m_Texture->GetGPUPtr(),
+			});
+
+		m_SbtHelper.AddHitGroup(L"PlaneHitGroup", 
+			{
+				(void*)m_PlaneMesh->GetVertexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
+				(void*)m_PlaneMesh->GetIndexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
+				(void*)m_PlaneTexture->GetGPUPtr(),
 			});
 
 		uint32_t sbtSize = m_SbtHelper.ComputeSBTSize();

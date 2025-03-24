@@ -99,7 +99,7 @@ namespace RaytracingDX12
 
 			m_RayGenSignature.Build(device, QueueID::Direct, true);
 			m_RayGenSignature.SetName(L"RayGenSignature");
-			
+
 			m_HitSignature.AddShaderResourceView(0); // vertex buffer
 			m_HitSignature.AddShaderResourceView(1); // index buffer
 
@@ -117,13 +117,14 @@ namespace RaytracingDX12
 
 			pipeline.AddLibrary(m_RayGenShader.GetShaderBlob().Get(), { L"RayGen" });
 			pipeline.AddLibrary(m_MissShader.GetShaderBlob().Get(), { L"Miss" });
-			pipeline.AddLibrary(m_HitShader.GetShaderBlob().Get(), { L"ClosestHit" });
+			pipeline.AddLibrary(m_HitShader.GetShaderBlob().Get(), { L"ClosestHit", L"PlaneClosestHit" });
 
 			pipeline.AddHitGroup(L"HitGroup", L"ClosestHit");
+			pipeline.AddHitGroup(L"PlaneHitGroup", L"PlaneClosestHit");
 
 			pipeline.AddRootSignatureAssociation(m_RayGenSignature.GetD3D12RootSignature(), { L"RayGen" });
 			pipeline.AddRootSignatureAssociation(m_MissSignature.GetD3D12RootSignature(), { L"Miss" });
-			pipeline.AddRootSignatureAssociation(m_HitSignature.GetD3D12RootSignature(), { L"HitGroup" });
+			pipeline.AddRootSignatureAssociation(m_HitSignature.GetD3D12RootSignature(), { L"HitGroup", L"PlaneHitGroup" });
 
 			pipeline.SetMaxPayloadSize(4 * sizeof(float)); // RGB + distance
 			pipeline.SetMaxAttributeSize(2 * sizeof(float)); // barycentric coordinates

@@ -21,7 +21,7 @@ namespace RaytracingDX12
 		AccelerationStructure(RenderDeviceD3D12* device);
 
 		/// Create all acceleration structures, bottom and top
-		void CreateAccelerationStructures(Mesh* mesh);
+		void CreateAccelerationStructures(Mesh* mesh, Mesh* planeMesh);
 
 		BufferHeapView* GetSrvView() const { return m_SrvView.get(); }
 
