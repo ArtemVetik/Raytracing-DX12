@@ -6,6 +6,7 @@
 
 #include "framework.h"
 #include "Mesh.h"
+#include "Timer.h"
 
 #include "../Core/Graphics/RenderDeviceD3D12.h"
 #include "DXRHelpers/nv_helpers_dx12/TopLevelASGenerator.h"
@@ -20,8 +21,10 @@ namespace RaytracingDX12
 	public:
 		AccelerationStructure(RenderDeviceD3D12* device);
 
-		/// Create all acceleration structures, bottom and top
 		void CreateAccelerationStructures(Mesh* mesh, Mesh* planeMesh);
+		void CreateTopLevelAS(bool updateOnly = false);
+		
+		void Update(const Timer& timer);
 
 		BufferHeapView* GetSrvView() const { return m_SrvView.get(); }
 
@@ -33,16 +36,8 @@ namespace RaytracingDX12
 			ComPtr<ID3D12Resource> pInstanceDesc;
 		};
 
-		/// Create the acceleration structure of an instance
-		///
-		/// \param     vVertexBuffers : pair of buffer and vertex count
-		/// \return    AccelerationStructureBuffers for TLAS
+		void CreateTopLevelAS(const std::vector<std::pair<ComPtr<ID3D12Resource>, DirectX::XMMATRIX>>& instances, bool updateOnly = false);
 		AccelerationStructureBuffers CreateBottomLevelAS(std::vector<Mesh*> meshes);
-
-		/// Create the main acceleration structure that holds
-		/// all instances of the scene
-		/// \param     instances : pair of BLAS and transform
-		void CreateTopLevelAS(const std::vector<std::pair<ComPtr<ID3D12Resource>, DirectX::XMMATRIX>>& instances);
 
 	private:
 		RenderDeviceD3D12* m_Device;

@@ -205,6 +205,10 @@ namespace RaytracingDX12
 		};
 
 		m_CameraUpload->LoadData(&matrices);
+
+		m_AccelerationStructure->Update(timer);
+		m_RenderObject->WorldMatrix = SimpleMath::Matrix::CreateScale(2.0f) * SimpleMath::Matrix::CreateRotationY(timer.GetTotalTime());
+		m_PlaneRenderObject->WorldMatrix = SimpleMath::Matrix::CreateScale(0.1f) * SimpleMath::Matrix::CreateTranslation(0, -1, 0);
 	}
 
 	void RenderEngine::Render()
@@ -227,6 +231,8 @@ namespace RaytracingDX12
 			dCommandContext.ResourceBarrier(CD3DX12_RESOURCE_BARRIER::Transition(m_OutputBuffer->GetD3D12Resource(),
 				D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
 			dCommandContext.FlushResourceBarriers();
+
+			m_AccelerationStructure->CreateTopLevelAS(true);
 
 			D3D12_DISPATCH_RAYS_DESC desc = {};
 			uint32_t rayGenerationSectionSizeInBytes = m_SbtHelper.GetRayGenSectionSize();
@@ -276,7 +282,7 @@ namespace RaytracingDX12
 			dCommandContext.GetCmdList()->SetGraphicsRootSignature(m_ColorPass->GetD3D12RootSignature());
 
 			ColorPass::ObjectConstants objConstants;
-			objConstants.World = SimpleMath::Matrix::CreateScale(2.0f).Transpose();
+			objConstants.World = m_RenderObject->WorldMatrix.Transpose();
 
 			ColorPass::PassConstants passConstants;
 			XMStoreFloat4x4(&passConstants.ViewProj, XMMatrixTranspose(m_Camera->GetViewProjMatrix()));
@@ -299,7 +305,7 @@ namespace RaytracingDX12
 
 			dCommandContext.GetCmdList()->DrawIndexedInstanced(m_RenderObject->GetIndexBuffer()->GetLength(), 1, 0, 0, 0);
 
-			objConstants.World = (SimpleMath::Matrix::CreateScale(0.1f) * SimpleMath::Matrix::CreateTranslation(0, -1, 0)).Transpose();
+			objConstants.World = m_PlaneRenderObject->WorldMatrix.Transpose();
 			DynamicUploadBuffer planeObjBuffer(m_Device.get(), QueueID::Direct);
 			planeObjBuffer.LoadData(objConstants);
 

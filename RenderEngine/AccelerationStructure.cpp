@@ -44,6 +44,19 @@ namespace RaytracingDX12
 		m_SrvView = std::make_unique<BufferHeapView>(std::move(allocation));
 	}
 
+	void AccelerationStructure::CreateTopLevelAS(bool updateOnly)
+	{
+		CreateTopLevelAS(m_Instances, updateOnly);
+	}
+
+	void AccelerationStructure::Update(const Timer& timer)
+	{
+		auto scaling = DirectX::XMMatrixScaling(2.0f, 2.0f, 2.0f);
+		auto rotation = DirectX::XMMatrixRotationAxis({ 0, 1, 0 }, timer.GetTotalTime());
+
+		m_Instances[0].second = DirectX::XMMatrixMultiply(scaling, rotation);
+	}
+
 	AccelerationStructure::AccelerationStructureBuffers AccelerationStructure::CreateBottomLevelAS(std::vector<Mesh*> meshes)
 	{
 		nv_helpers_dx12::BottomLevelASGenerator bottomLevelAS;
@@ -76,39 +89,44 @@ namespace RaytracingDX12
 		return buffers;
 	}
 
-	void AccelerationStructure::CreateTopLevelAS(const std::vector<std::pair<ComPtr<ID3D12Resource>, DirectX::XMMATRIX>>& instances)
+	void AccelerationStructure::CreateTopLevelAS(const std::vector<std::pair<ComPtr<ID3D12Resource>, DirectX::XMMATRIX>>& instances, bool updateOnly)
 	{
-		for (size_t i = 0; i < instances.size(); i++)
+		if (!updateOnly)
 		{
-			m_TopLevelASGenerator.AddInstance(
-				instances[i].first.Get(),
-				instances[i].second,
-				static_cast<UINT>(i),
-				static_cast<UINT>(2 * i)
-			);
+			for (size_t i = 0; i < instances.size(); i++)
+			{
+				m_TopLevelASGenerator.AddInstance(
+					instances[i].first.Get(),
+					instances[i].second,
+					static_cast<UINT>(i),
+					static_cast<UINT>(2 * i)
+				);
+			}
+
+			UINT64 scratchSize, resultSize, instanceDescsSize;
+
+			m_TopLevelASGenerator.ComputeASBufferSizes(m_Device->GetD3D12Device(), true, &scratchSize, &resultSize, &instanceDescsSize);
+
+			m_TopLevelASBuffers.pScratch = nv_helpers_dx12::CreateBuffer(
+				m_Device->GetD3D12Device(), scratchSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
+				D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+				nv_helpers_dx12::kDefaultHeapProps);
+			m_TopLevelASBuffers.pResult = nv_helpers_dx12::CreateBuffer(
+				m_Device->GetD3D12Device(), resultSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
+				D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
+				nv_helpers_dx12::kDefaultHeapProps);
+
+			m_TopLevelASBuffers.pInstanceDesc = nv_helpers_dx12::CreateBuffer(
+				m_Device->GetD3D12Device(), instanceDescsSize, D3D12_RESOURCE_FLAG_NONE,
+				D3D12_RESOURCE_STATE_GENERIC_READ, nv_helpers_dx12::kUploadHeapProps);
 		}
-
-		UINT64 scratchSize, resultSize, instanceDescsSize;
-
-		m_TopLevelASGenerator.ComputeASBufferSizes(m_Device->GetD3D12Device(), true, &scratchSize, &resultSize, &instanceDescsSize);
-
-		m_TopLevelASBuffers.pScratch = nv_helpers_dx12::CreateBuffer(
-			m_Device->GetD3D12Device(), scratchSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
-			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-			nv_helpers_dx12::kDefaultHeapProps);
-		m_TopLevelASBuffers.pResult = nv_helpers_dx12::CreateBuffer(
-			m_Device->GetD3D12Device(), resultSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
-			D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
-			nv_helpers_dx12::kDefaultHeapProps);
-
-		m_TopLevelASBuffers.pInstanceDesc = nv_helpers_dx12::CreateBuffer(
-			m_Device->GetD3D12Device(), instanceDescsSize, D3D12_RESOURCE_FLAG_NONE,
-			D3D12_RESOURCE_STATE_GENERIC_READ, nv_helpers_dx12::kUploadHeapProps);
 
 		m_TopLevelASGenerator.Generate(m_Device->GetCommandContext(D3D12_COMMAND_LIST_TYPE_DIRECT).GetCmdList(),
 			m_TopLevelASBuffers.pScratch.Get(),
 			m_TopLevelASBuffers.pResult.Get(),
-			m_TopLevelASBuffers.pInstanceDesc.Get());
+			m_TopLevelASBuffers.pInstanceDesc.Get(),
+			updateOnly,
+			m_TopLevelASBuffers.pResult.Get());
 
 		m_TopLevelASBuffers.pScratch->SetName(L"TopLevelAS_Scratch");
 		m_TopLevelASBuffers.pResult->SetName(L"TopLevelAS_Result");
