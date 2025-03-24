@@ -74,6 +74,7 @@ namespace RaytracingDX12
 		ShaderD3D12 m_RayGenShader;
 		ShaderD3D12 m_HitShader;
 		ShaderD3D12 m_MissShader;
+		ShaderD3D12 m_ShadowShader;
 		RootSignatureD3D12 m_RayGenSignature;
 		RootSignatureD3D12 m_HitSignature;
 		RootSignatureD3D12 m_MissSignature;
@@ -85,7 +86,8 @@ namespace RaytracingDX12
 		RaytracingPass(RenderDeviceD3D12* device, const LPCWSTR* macros = nullptr) :
 			m_RayGenShader(L"Shaders\\RayGen.hlsl", EDU_SHADER_TYPE_LIB, macros, L"", L"lib_6_3"),
 			m_HitShader(L"Shaders\\Hit.hlsl", EDU_SHADER_TYPE_LIB, macros, L"", L"lib_6_3"),
-			m_MissShader(L"Shaders\\Miss.hlsl", EDU_SHADER_TYPE_LIB, macros, L"", L"lib_6_3")
+			m_MissShader(L"Shaders\\Miss.hlsl", EDU_SHADER_TYPE_LIB, macros, L"", L"lib_6_3"),
+			m_ShadowShader(L"Shaders\\ShadowRay.hlsl", EDU_SHADER_TYPE_LIB, macros, L"", L"lib_6_3")
 		{
 			CD3DX12_DESCRIPTOR_RANGE output;
 			output.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);
@@ -107,6 +109,10 @@ namespace RaytracingDX12
 			albedoTex.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2);
 			m_HitSignature.AddDescriptorParameter(1, &albedoTex); // albedo texture
 
+			CD3DX12_DESCRIPTOR_RANGE tlasHit;
+			tlasHit.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3);
+			m_HitSignature.AddDescriptorParameter(1, &tlasHit); // TLAS
+
 			m_HitSignature.Build(device, QueueID::Direct, true);
 			m_HitSignature.SetName(L"HitSignature");
 
@@ -118,17 +124,19 @@ namespace RaytracingDX12
 			pipeline.AddLibrary(m_RayGenShader.GetShaderBlob().Get(), { L"RayGen" });
 			pipeline.AddLibrary(m_MissShader.GetShaderBlob().Get(), { L"Miss" });
 			pipeline.AddLibrary(m_HitShader.GetShaderBlob().Get(), { L"ClosestHit", L"PlaneClosestHit" });
+			pipeline.AddLibrary(m_ShadowShader.GetShaderBlob().Get(), { L"ShadowClosestHit", L"ShadowMiss" });
 
 			pipeline.AddHitGroup(L"HitGroup", L"ClosestHit");
 			pipeline.AddHitGroup(L"PlaneHitGroup", L"PlaneClosestHit");
+			pipeline.AddHitGroup(L"ShadowHitGroup", L"ShadowClosestHit");
 
 			pipeline.AddRootSignatureAssociation(m_RayGenSignature.GetD3D12RootSignature(), { L"RayGen" });
-			pipeline.AddRootSignatureAssociation(m_MissSignature.GetD3D12RootSignature(), { L"Miss" });
-			pipeline.AddRootSignatureAssociation(m_HitSignature.GetD3D12RootSignature(), { L"HitGroup", L"PlaneHitGroup" });
+			pipeline.AddRootSignatureAssociation(m_MissSignature.GetD3D12RootSignature(), { L"Miss", L"ShadowMiss"});
+			pipeline.AddRootSignatureAssociation(m_HitSignature.GetD3D12RootSignature(), { L"HitGroup", L"PlaneHitGroup", L"ShadowHitGroup"});
 
 			pipeline.SetMaxPayloadSize(4 * sizeof(float)); // RGB + distance
 			pipeline.SetMaxAttributeSize(2 * sizeof(float)); // barycentric coordinates
-			pipeline.SetMaxRecursionDepth(1);
+			pipeline.SetMaxRecursionDepth(2);
 
 			m_RtStateObject = pipeline.Generate();
 

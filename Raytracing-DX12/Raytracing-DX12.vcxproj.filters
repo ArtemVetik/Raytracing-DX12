@@ -38,5 +38,8 @@
     <None Include="Shaders\RayGen.hlsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="Shaders\ShadowRay.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

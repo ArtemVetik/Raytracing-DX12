@@ -84,7 +84,7 @@ namespace RaytracingDX12
 				instances[i].first.Get(),
 				instances[i].second,
 				static_cast<UINT>(i),
-				static_cast<UINT>(i)
+				static_cast<UINT>(2 * i)
 			);
 		}
 

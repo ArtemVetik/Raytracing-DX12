@@ -9,7 +9,7 @@ cbuffer gCameraCB : register(b0)
 }
 
 RWTexture2D<float4> gOutput : register(u0);
-RaytracingAccelerationStructure SceneBVH : register(t0);
+RaytracingAccelerationStructure gSceneBVH : register(t0);
 
 [shader("raygeneration")]
 void RayGen()
@@ -35,7 +35,7 @@ void RayGen()
     TraceRay(
     // Parameter name: AccelerationStructure
     // Acceleration structure
-    SceneBVH,
+    gSceneBVH,
 
     // Parameter name: RayFlags
     // Flags can be used to specify the behavior upon hitting a surface

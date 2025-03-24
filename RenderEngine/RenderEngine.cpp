@@ -400,6 +400,8 @@ namespace RaytracingDX12
 		m_SbtHelper.Reset();
 		m_SbtHelper.AddRayGenerationProgram(L"RayGen", { outputPointer, tlasPointer, (void*)m_CameraUpload->GetD3D12Resource()->GetGPUVirtualAddress() });
 		m_SbtHelper.AddMissProgram(L"Miss", { (void*)m_MissPadding->GetD3D12Resource()->GetGPUVirtualAddress() });
+		m_SbtHelper.AddMissProgram(L"ShadowMiss", {});
+
 		m_SbtHelper.AddHitGroup(L"HitGroup", 
 			{ 
 				(void*)m_Mesh->GetVertexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
@@ -407,11 +409,14 @@ namespace RaytracingDX12
 				(void*)m_Texture->GetGPUPtr(),
 			});
 
+		m_SbtHelper.AddHitGroup(L"ShadowHitGroup", {});
+
 		m_SbtHelper.AddHitGroup(L"PlaneHitGroup", 
 			{
 				(void*)m_PlaneMesh->GetVertexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
 				(void*)m_PlaneMesh->GetIndexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
 				(void*)m_PlaneTexture->GetGPUPtr(),
+				tlasPointer,
 			});
 
 		uint32_t sbtSize = m_SbtHelper.ComputeSBTSize();
