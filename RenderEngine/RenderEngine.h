@@ -65,8 +65,11 @@ namespace RaytracingDX12
 		std::unique_ptr<TextureD3D12> m_OutputBuffer;
 		nv_helpers_dx12::ShaderBindingTableGenerator m_SbtHelper;
 		std::unique_ptr<UploadBufferD3D12> m_SbtStorage;
-		std::unique_ptr<UploadBufferD3D12> m_CameraUpload;
+		std::unique_ptr<UploadBufferD3D12> m_PassUpload;
+		std::unique_ptr<UploadBufferD3D12> m_CamUpload;
+		std::unique_ptr<BufferD3D12> m_MaterialBuffer;
 
+		XMFLOAT3 m_LightPos;
 		bool m_Raster;
 		D3D12_VIEWPORT m_Viewport;
 		D3D12_RECT m_ScissorRect;

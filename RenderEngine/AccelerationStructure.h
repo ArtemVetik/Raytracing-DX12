@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "framework.h"
-#include "Mesh.h"
+#include "RenderObject.h"
 #include "Timer.h"
 
 #include "../Core/Graphics/RenderDeviceD3D12.h"
@@ -21,10 +21,10 @@ namespace RaytracingDX12
 	public:
 		AccelerationStructure(RenderDeviceD3D12* device);
 
-		void CreateAccelerationStructures(Mesh* mesh, Mesh* planeMesh);
+		void CreateAccelerationStructures(RenderObject* mesh, RenderObject* planeMesh);
 		void CreateTopLevelAS(bool updateOnly = false);
 		
-		void Update(const Timer& timer);
+		void Update(DirectX::XMMATRIX world);
 
 		BufferHeapView* GetSrvView() const { return m_SrvView.get(); }
 

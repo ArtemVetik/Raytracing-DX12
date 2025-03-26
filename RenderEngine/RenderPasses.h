@@ -11,6 +11,7 @@
 
 using namespace EduEngine;
 using namespace Microsoft::WRL;
+using namespace DirectX;
 
 namespace RaytracingDX12
 {
@@ -70,6 +71,26 @@ namespace RaytracingDX12
 
 	class RaytracingPass
 	{
+	public:
+		struct PassConstants
+		{
+			XMFLOAT3 LightPos;
+			UINT Padding;
+			XMMATRIX World;
+		};
+
+		struct CameraConstants
+		{
+			XMFLOAT4 CamPos;
+			XMMATRIX ViewProjInv;
+		};
+
+		struct MaterialConstants
+		{
+			XMFLOAT4 LightAmbientColor;
+			XMFLOAT4 LightDiffuseColor;
+		};
+
 	private:
 		ShaderD3D12 m_RayGenShader;
 		ShaderD3D12 m_HitShader;
@@ -112,6 +133,9 @@ namespace RaytracingDX12
 			CD3DX12_DESCRIPTOR_RANGE tlasHit;
 			tlasHit.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3);
 			m_HitSignature.AddDescriptorParameter(1, &tlasHit); // TLAS
+
+			m_HitSignature.AddConstantBufferView(0); // pass
+			m_HitSignature.AddConstantBufferView(1); // material
 
 			m_HitSignature.Build(device, QueueID::Direct, true);
 			m_HitSignature.SetName(L"HitSignature");

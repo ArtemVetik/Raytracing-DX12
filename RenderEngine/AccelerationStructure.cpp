@@ -11,14 +11,15 @@ namespace RaytracingDX12
 	{
 	}
 
-	void AccelerationStructure::CreateAccelerationStructures(Mesh* mesh, Mesh* planeMesh)
+	void AccelerationStructure::CreateAccelerationStructures(RenderObject* mainObject, RenderObject* plane)
 	{
-		AccelerationStructureBuffers bottomLevelBuffers = CreateBottomLevelAS({ mesh });
-		AccelerationStructureBuffers planeBottomLevelBuffers = CreateBottomLevelAS({ planeMesh });
+		AccelerationStructureBuffers bottomLevelBuffers = CreateBottomLevelAS({ mainObject->GetMesh() });
+		AccelerationStructureBuffers planeBottomLevelBuffers = CreateBottomLevelAS({ plane->GetMesh() });
 
-		m_Instances = {
-			{bottomLevelBuffers.pResult, DirectX::XMMatrixScaling(2.0f, 2.0f, 2.0f)},
-			{planeBottomLevelBuffers.pResult, DirectX::XMMatrixMultiply(DirectX::XMMatrixScaling(0.1f, 0.1f, 0.1f), DirectX::XMMatrixTranslation(0, -1, 0))},
+		m_Instances =
+		{
+			{bottomLevelBuffers.pResult, mainObject->WorldMatrix },
+			{planeBottomLevelBuffers.pResult, plane->WorldMatrix },
 		};
 
 		CreateTopLevelAS(m_Instances);
@@ -49,12 +50,9 @@ namespace RaytracingDX12
 		CreateTopLevelAS(m_Instances, updateOnly);
 	}
 
-	void AccelerationStructure::Update(const Timer& timer)
+	void AccelerationStructure::Update(DirectX::XMMATRIX world)
 	{
-		auto scaling = DirectX::XMMatrixScaling(2.0f, 2.0f, 2.0f);
-		auto rotation = DirectX::XMMatrixRotationAxis({ 0, 1, 0 }, timer.GetTotalTime());
-
-		m_Instances[0].second = DirectX::XMMatrixMultiply(scaling, rotation);
+		m_Instances[0].second = world;
 	}
 
 	AccelerationStructure::AccelerationStructureBuffers AccelerationStructure::CreateBottomLevelAS(std::vector<Mesh*> meshes)
