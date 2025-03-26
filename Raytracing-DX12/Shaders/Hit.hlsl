@@ -68,31 +68,9 @@ void ClosestHit(inout HitInfo payload, BuiltInTriangleIntersectionAttributes att
     
     triangleNormal = mul(triangleNormal, (float3x3) gWorld);
     
-    float4 diffuseAlbedo = gAlbedo.SampleLevel(gsamPointWrap, texC, 0);
-    float4 phongColor = CalculatePhongLighting(gLightPos, diffuseAlbedo, triangleNormal, diffuseCoef, specularCoef, specularPower);
-    
-    payload.colorAndDistance = float4(phongColor.rgb, RayTCurrent());
-}
-
-[shader("closesthit")]
-void PlaneClosestHit(inout HitInfo payload, BuiltInTriangleIntersectionAttributes attrib)
-{
-    uint vertId = 3 * PrimitiveIndex();
-    float3 worldOrigin = WorldRayOrigin() + RayTCurrent() * WorldRayDirection();
-    float3 lightDir = normalize(gLightPos - worldOrigin);
-
-    float3 vertexTexC[3] =
-    {
-        float3(gMeshVertex[gMeshIndex[vertId + 0]].TexC, 1),
-        float3(gMeshVertex[gMeshIndex[vertId + 1]].TexC, 1),
-        float3(gMeshVertex[gMeshIndex[vertId + 2]].TexC, 1),
-    };
-    
-    float2 texC = HitAttribute(vertexTexC, attrib).xy;
-    
     RayDesc ray;
     ray.Origin = worldOrigin;
-    ray.Direction = lightDir;
+    ray.Direction = normalize(gLightPos - worldOrigin);
     ray.TMin = 0.001;
     ray.TMax = 100000;
 
@@ -100,9 +78,10 @@ void PlaneClosestHit(inout HitInfo payload, BuiltInTriangleIntersectionAttribute
     shadowPayload.IsHit = false;
     
     TraceRay(gSceneBVH, RAY_FLAG_NONE, 0xFF, 1, 0, 1, ray, shadowPayload);
-
-    float factor = shadowPayload.IsHit ? 0.3 : 1.0;
-    float3 hitColor = gAlbedo.SampleLevel(gsamPointWrap, texC * 4, 0).rgb * factor;
     
-    payload.colorAndDistance = float4(hitColor, RayTCurrent());
+    float texScale = InstanceID() == 0 ? 1 : 4;
+    float4 diffuseAlbedo = gAlbedo.SampleLevel(gsamPointWrap, texC * texScale, 0);
+    float4 phongColor = CalculatePhongLighting(gLightPos, diffuseAlbedo, triangleNormal, shadowPayload.IsHit, diffuseCoef, specularCoef, specularPower);
+    
+    payload.colorAndDistance = float4(phongColor.rgb, RayTCurrent());
 }

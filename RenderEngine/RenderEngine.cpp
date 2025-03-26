@@ -437,7 +437,7 @@ namespace RaytracingDX12
 
 		m_SbtHelper.AddHitGroup(L"ShadowHitGroup", {});
 
-		m_SbtHelper.AddHitGroup(L"PlaneHitGroup",
+		m_SbtHelper.AddHitGroup(L"HitGroup",
 			{
 				(void*)m_PlaneMesh->GetVertexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
 				(void*)m_PlaneMesh->GetIndexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
@@ -445,6 +445,8 @@ namespace RaytracingDX12
 				tlasPointer,
 				(void*)m_PassUpload->GetD3D12Resource()->GetGPUVirtualAddress(),
 			});
+
+		m_SbtHelper.AddHitGroup(L"ShadowHitGroup", {});
 
 		uint32_t sbtSize = m_SbtHelper.ComputeSBTSize();
 

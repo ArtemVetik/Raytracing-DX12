@@ -1,9 +1,10 @@
 static const float4 lightAmbientColor = float4(0.8, 0.8, 0.8, 1.0);
-static const float4 lightDiffuseColor = float4(0.5, 0.1, 0.1, 1.0);
+static const float4 lightDiffuseColor = float4(0.5, 0.5, 0.5, 1.0);
 static const float4 lightSpecularColor = float4(1, 1, 1, 1);
 static const float diffuseCoef = 0.9;
 static const float specularCoef = 0.7;
 static const float specularPower = 50;
+static const float InShadowRadiance = 0.35f;
 
 struct VertexPositionNormalTangentTexture
 {
@@ -44,26 +45,32 @@ float4 CalculateSpecularCoefficient(in float3 hitPosition, in float3 incidentLig
 }
 
 // Phong lighting model = ambient + diffuse + specular components.
-float4 CalculatePhongLighting(in float3 lightPos, in float4 albedo, in float3 normal, in float diffuseCoef = 1.0, in float specularCoef = 1.0, in float specularPower = 50)
+float4 CalculatePhongLighting(in float3 lightPosition, in float4 albedo, in float3 normal, in bool isInShadow, in float diffuseCoef = 1.0, in float specularCoef = 1.0, in float specularPower = 50)
 {
     float3 hitPosition = HitWorldPosition();
-    float3 incidentLightRay = normalize(hitPosition - lightPos);
+    float shadowFactor = isInShadow ? InShadowRadiance : 1.0;
+    float3 incidentLightRay = normalize(hitPosition - lightPosition);
 
     // Diffuse component.
     float Kd = CalculateDiffuseCoefficient(hitPosition, incidentLightRay, normal);
-    float4 diffuseColor = diffuseCoef * Kd * lightDiffuseColor * albedo;
+    float4 diffuseColor = shadowFactor * diffuseCoef * Kd * lightDiffuseColor * albedo;
 
     // Specular component.
     float4 specularColor = float4(0, 0, 0, 0);
-    float4 Ks = CalculateSpecularCoefficient(hitPosition, incidentLightRay, normal, specularPower);
-    specularColor = specularCoef * Ks * lightSpecularColor;
+    if (!isInShadow)
+    {
+        float4 lightSpecularColor = float4(1, 1, 1, 1);
+        float4 Ks = CalculateSpecularCoefficient(hitPosition, incidentLightRay, normal, specularPower);
+        specularColor = specularCoef * Ks * lightSpecularColor;
+    }
 
     // Ambient component.
     // Fake AO: Darken faces with normal facing downwards/away from the sky a little bit.
+    float4 ambientColor = lightAmbientColor;
     float4 ambientColorMin = lightAmbientColor - 0.15;
     float4 ambientColorMax = lightAmbientColor;
-    float fNDotL = saturate(dot(-incidentLightRay, normal));
-    float4 ambientColor = albedo * lerp(ambientColorMin, ambientColorMax, fNDotL);
+    float a = 1 - saturate(dot(normal, float3(0, -1, 0)));
+    ambientColor = albedo * lerp(ambientColorMin, ambientColorMax, a);
 
     return ambientColor + diffuseColor + specularColor;
 }

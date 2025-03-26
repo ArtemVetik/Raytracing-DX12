@@ -142,16 +142,15 @@ namespace RaytracingDX12
 
 			pipeline.AddLibrary(m_RayGenShader.GetShaderBlob().Get(), { L"RayGen" });
 			pipeline.AddLibrary(m_MissShader.GetShaderBlob().Get(), { L"Miss" });
-			pipeline.AddLibrary(m_HitShader.GetShaderBlob().Get(), { L"ClosestHit", L"PlaneClosestHit" });
+			pipeline.AddLibrary(m_HitShader.GetShaderBlob().Get(), { L"ClosestHit" });
 			pipeline.AddLibrary(m_ShadowShader.GetShaderBlob().Get(), { L"ShadowClosestHit", L"ShadowMiss" });
 
 			pipeline.AddHitGroup(L"HitGroup", L"ClosestHit");
-			pipeline.AddHitGroup(L"PlaneHitGroup", L"PlaneClosestHit");
 			pipeline.AddHitGroup(L"ShadowHitGroup", L"ShadowClosestHit");
 
 			pipeline.AddRootSignatureAssociation(m_RayGenSignature.GetD3D12RootSignature(), { L"RayGen" });
 			pipeline.AddRootSignatureAssociation(m_MissSignature.GetD3D12RootSignature(), { L"Miss", L"ShadowMiss"});
-			pipeline.AddRootSignatureAssociation(m_HitSignature.GetD3D12RootSignature(), { L"HitGroup", L"PlaneHitGroup", L"ShadowHitGroup"});
+			pipeline.AddRootSignatureAssociation(m_HitSignature.GetD3D12RootSignature(), { L"HitGroup", L"ShadowHitGroup"});
 
 			pipeline.SetMaxPayloadSize(4 * sizeof(float)); // RGB + distance
 			pipeline.SetMaxAttributeSize(2 * sizeof(float)); // barycentric coordinates
