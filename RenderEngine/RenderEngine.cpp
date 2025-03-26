@@ -100,8 +100,8 @@ namespace RaytracingDX12
 		m_PlaneMesh = std::make_shared<Mesh>(m_Device.get(), "Models\\plane.fbx");
 		m_PlaneMesh->Load();
 
-		m_Texture = std::make_unique<Texture>(m_Device.get(), L"Textures\\principledshader_albedo.dds");
-		m_PlaneTexture = std::make_unique<Texture>(m_Device.get(), L"Textures\\Floortile1Color.dds");
+		m_Texture = std::make_unique<Texture>(m_Device.get(), L"Textures\\joseph_albedo.dds");
+		m_PlaneTexture = std::make_unique<Texture>(m_Device.get(), L"Textures\\tile.dds");
 
 		m_Material = std::make_shared<Material>();
 		m_Material->SetMainTexture(m_Texture.get());

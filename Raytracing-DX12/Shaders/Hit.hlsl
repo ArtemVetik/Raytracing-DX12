@@ -102,7 +102,7 @@ void PlaneClosestHit(inout HitInfo payload, BuiltInTriangleIntersectionAttribute
     TraceRay(gSceneBVH, RAY_FLAG_NONE, 0xFF, 1, 0, 1, ray, shadowPayload);
 
     float factor = shadowPayload.IsHit ? 0.3 : 1.0;
-    float3 hitColor = gAlbedo.SampleLevel(gsamPointWrap, texC, 0).rgb * factor;
+    float3 hitColor = gAlbedo.SampleLevel(gsamPointWrap, texC * 4, 0).rgb * factor;
     
     payload.colorAndDistance = float4(hitColor, RayTCurrent());
 }
