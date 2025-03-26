@@ -76,6 +76,8 @@ namespace RaytracingDX12
 		{
 			XMFLOAT3 LightPos;
 			UINT Padding;
+			XMFLOAT3 CamPos;
+			UINT Padding1;
 			XMMATRIX World;
 		};
 
@@ -83,12 +85,6 @@ namespace RaytracingDX12
 		{
 			XMFLOAT4 CamPos;
 			XMMATRIX ViewProjInv;
-		};
-
-		struct MaterialConstants
-		{
-			XMFLOAT4 LightAmbientColor;
-			XMFLOAT4 LightDiffuseColor;
 		};
 
 	private:
@@ -135,7 +131,6 @@ namespace RaytracingDX12
 			m_HitSignature.AddDescriptorParameter(1, &tlasHit); // TLAS
 
 			m_HitSignature.AddConstantBufferView(0); // pass
-			m_HitSignature.AddConstantBufferView(1); // material
 
 			m_HitSignature.Build(device, QueueID::Direct, true);
 			m_HitSignature.SetName(L"HitSignature");

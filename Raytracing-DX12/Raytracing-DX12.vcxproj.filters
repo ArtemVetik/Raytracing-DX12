@@ -41,5 +41,8 @@
     <None Include="Shaders\ShadowRay.hlsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="Shaders\LightingUtil.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

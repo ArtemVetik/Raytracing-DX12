@@ -1,4 +1,5 @@
 #include "Common.hlsl"
+#include "LightingUtil.hlsl"
 
 struct ShadowHitInfo
 {
@@ -30,13 +31,9 @@ cbuffer gPassCB : register(b0)
 {
     float3 gLightPos;
     uint gPadding;
+    float3 gCamPos;
+    uint gPadding1;
     float4x4 gWorld;
-}
-
-cbuffer gMaterialCB : register(b1)
-{
-    float4 gLightAmbientColor;
-    float4 gLightDiffuseColor;
 }
 
 float3 HitAttribute(float3 vertexAttribute[3], BuiltInTriangleIntersectionAttributes attr)
@@ -44,14 +41,6 @@ float3 HitAttribute(float3 vertexAttribute[3], BuiltInTriangleIntersectionAttrib
     return vertexAttribute[0] +
         attr.barycentrics.x * (vertexAttribute[1] - vertexAttribute[0]) +
         attr.barycentrics.y * (vertexAttribute[2] - vertexAttribute[0]);
-}
-
-float4 CalculateDiffuseLighting(float3 hitPosition, float3 normal)
-{
-    float3 pixelToLight = normalize(gLightPos - hitPosition);
-    
-    float fNDotL = max(0.0f, dot(pixelToLight, normal));
-    return gLightAmbientColor + gLightDiffuseColor * fNDotL;
 }
 
 [shader("closesthit")]
@@ -74,17 +63,15 @@ void ClosestHit(inout HitInfo payload, BuiltInTriangleIntersectionAttributes att
         gMeshVertex[gMeshIndex[vertId + 2]].Normal,
     };
     
-    float3 triangleNormal = HitAttribute(vertexNormals, attrib);
     float2 texC = HitAttribute(vertexTexC, attrib).xy;
+    float3 triangleNormal = HitAttribute(vertexNormals, attrib);
     
-    triangleNormal = mul(triangleNormal, (float3x3)gWorld);
+    triangleNormal = mul(triangleNormal, (float3x3) gWorld);
     
-    float4 diffuseColor = CalculateDiffuseLighting(worldOrigin, triangleNormal);
     float4 diffuseAlbedo = gAlbedo.SampleLevel(gsamPointWrap, texC, 0);
+    float4 phongColor = CalculatePhongLighting(gLightPos, diffuseAlbedo, triangleNormal, diffuseCoef, specularCoef, specularPower);
     
-    float4 color = diffuseAlbedo * diffuseColor;
-    
-    payload.colorAndDistance = float4(color.rgb, RayTCurrent());
+    payload.colorAndDistance = float4(phongColor.rgb, RayTCurrent());
 }
 
 [shader("closesthit")]
@@ -117,4 +104,5 @@ void PlaneClosestHit(inout HitInfo payload, BuiltInTriangleIntersectionAttribute
     float factor = shadowPayload.IsHit ? 0.3 : 1.0;
     float3 hitColor = gAlbedo.SampleLevel(gsamPointWrap, texC, 0).rgb * factor;
     
-    payload.colorAndDistance = float4(hitColor, RayTCurrent());}
+    payload.colorAndDistance = float4(hitColor, RayTCurrent());
+}

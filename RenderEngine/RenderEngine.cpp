@@ -143,15 +143,6 @@ namespace RaytracingDX12
 		m_CamUpload = std::make_unique<UploadBufferD3D12>(m_Device.get(), buffDesc, QueueID::Direct);
 		m_CamUpload->SetName(L"CameraBuffer");
 
-		buffDesc.Width = sizeof(RaytracingPass::MaterialConstants);
-		m_MaterialBuffer = std::make_unique<BufferD3D12>(m_Device.get(), buffDesc, QueueID::Direct);
-		m_MaterialBuffer->SetName(L"MaterialBuffer");
-
-		RaytracingPass::MaterialConstants mat = {};
-		mat.LightAmbientColor = { 0.5f, 0.5f, 0.5f, 1.0f };
-		mat.LightDiffuseColor = { 0.5f, 0.0f, 0.0f, 1.0f };
-		m_MaterialBuffer->LoadData(&mat);
-
 		ResizeOutputBuffer();
 
 		return true;
@@ -219,6 +210,7 @@ namespace RaytracingDX12
 
 		RaytracingPass::PassConstants passConstants;
 		passConstants.LightPos = m_LightPos;
+		passConstants.CamPos = m_Camera->GetPosition();
 		passConstants.World = m_RenderObject->WorldMatrix.Transpose();
 
 		XMMATRIX view = XMLoadFloat4x4(&m_Camera->GetViewMatrix());
@@ -441,7 +433,6 @@ namespace RaytracingDX12
 				(void*)m_Texture->GetGPUPtr(),
 				tlasPointer,
 				(void*)m_PassUpload->GetD3D12Resource()->GetGPUVirtualAddress(),
-				(void*)m_MaterialBuffer->GetD3D12Resource()->GetGPUVirtualAddress(),
 			});
 
 		m_SbtHelper.AddHitGroup(L"ShadowHitGroup", {});
@@ -453,7 +444,6 @@ namespace RaytracingDX12
 				(void*)m_PlaneTexture->GetGPUPtr(),
 				tlasPointer,
 				(void*)m_PassUpload->GetD3D12Resource()->GetGPUVirtualAddress(),
-				(void*)m_MaterialBuffer->GetD3D12Resource()->GetGPUVirtualAddress(),
 			});
 
 		uint32_t sbtSize = m_SbtHelper.ComputeSBTSize();
