@@ -21,7 +21,7 @@ namespace RaytracingDX12
 	public:
 		AccelerationStructure(RenderDeviceD3D12* device);
 
-		void CreateAccelerationStructures(RenderObject* mesh, RenderObject* planeMesh);
+		void CreateAccelerationStructures(RenderObject* plane, RenderObject* mainObject, RenderObject* mainObject2);
 		void CreateTopLevelAS(bool updateOnly = false);
 		
 		void Update(DirectX::XMMATRIX world);

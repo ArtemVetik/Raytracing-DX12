@@ -11,15 +11,17 @@ namespace RaytracingDX12
 	{
 	}
 
-	void AccelerationStructure::CreateAccelerationStructures(RenderObject* mainObject, RenderObject* plane)
+	void AccelerationStructure::CreateAccelerationStructures(RenderObject* plane, RenderObject* mainObject, RenderObject* mainObject2)
 	{
-		AccelerationStructureBuffers bottomLevelBuffers = CreateBottomLevelAS({ mainObject->GetMesh() });
 		AccelerationStructureBuffers planeBottomLevelBuffers = CreateBottomLevelAS({ plane->GetMesh() });
+		AccelerationStructureBuffers bottomLevelBuffers = CreateBottomLevelAS({ mainObject->GetMesh() });
+		AccelerationStructureBuffers bottomLevelBuffers2 = CreateBottomLevelAS({ mainObject2->GetMesh() });
 
 		m_Instances =
 		{
-			{bottomLevelBuffers.pResult, mainObject->WorldMatrix },
 			{planeBottomLevelBuffers.pResult, plane->WorldMatrix },
+			{bottomLevelBuffers.pResult, mainObject->WorldMatrix },
+			{bottomLevelBuffers2.pResult, mainObject2->WorldMatrix },
 		};
 
 		CreateTopLevelAS(m_Instances);
@@ -52,7 +54,7 @@ namespace RaytracingDX12
 
 	void AccelerationStructure::Update(DirectX::XMMATRIX world)
 	{
-		m_Instances[0].second = world;
+		m_Instances[1].second = world;
 	}
 
 	AccelerationStructure::AccelerationStructureBuffers AccelerationStructure::CreateBottomLevelAS(std::vector<Mesh*> meshes)

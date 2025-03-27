@@ -66,22 +66,61 @@ void ClosestHit(inout HitInfo payload, BuiltInTriangleIntersectionAttributes att
     float2 texC = HitAttribute(vertexTexC, attrib).xy;
     float3 triangleNormal = HitAttribute(vertexNormals, attrib);
     
-    triangleNormal = mul(triangleNormal, (float3x3) gWorld);
+    if (InstanceID() == 1)
+        triangleNormal = mul(triangleNormal, (float3x3) gWorld);
     
-    RayDesc ray;
-    ray.Origin = worldOrigin;
-    ray.Direction = normalize(gLightPos - worldOrigin);
-    ray.TMin = 0.001;
-    ray.TMax = 100000;
-
-    ShadowHitInfo shadowPayload;
-    shadowPayload.IsHit = false;
-    
-    TraceRay(gSceneBVH, RAY_FLAG_NONE, 0xFF, 1, 0, 1, ray, shadowPayload);
-    
-    float texScale = InstanceID() == 0 ? 1 : 4;
+    float texScale = InstanceID() == 0 ? 4 : 1;
     float4 diffuseAlbedo = gAlbedo.SampleLevel(gsamPointWrap, texC * texScale, 0);
-    float4 phongColor = CalculatePhongLighting(gLightPos, diffuseAlbedo, triangleNormal, shadowPayload.IsHit, diffuseCoef, specularCoef, specularPower);
     
-    payload.colorAndDistance = float4(phongColor.rgb, RayTCurrent());
+    float4 color;
+    if (payload.recursionDepth < 4)
+    {
+        // Shadow
+        RayDesc shadowRay;
+        shadowRay.Origin = worldOrigin;
+        shadowRay.Direction = normalize(gLightPos - shadowRay.Origin);
+        shadowRay.TMin = 0.01;
+        shadowRay.TMax = 100000;
+        ShadowHitInfo shadowPayload;
+        TraceRay(gSceneBVH,
+            0 /*rayFlags*/,
+            0xFF,
+            1 /* ray index*/,
+            0 /* Multiplies */,
+            1 /* Miss index (shadow) */,
+            shadowRay,
+            shadowPayload);
+
+        // Reflection    
+        RayDesc reflectionRay;
+        reflectionRay.Origin = worldOrigin;
+        reflectionRay.Direction = reflect(WorldRayDirection(), triangleNormal);
+        reflectionRay.TMin = 0.01;
+        reflectionRay.TMax = 100000;
+        HitInfo reflectionPayload;
+        reflectionPayload.recursionDepth = payload.recursionDepth + 1;
+        
+        TraceRay(gSceneBVH,
+            0 /*rayFlags*/,
+            0xFF,
+            0 /* ray index*/,
+            0 /* Multiplies */,
+            0 /* Miss index (raytrace) */,
+            reflectionRay,
+            reflectionPayload);
+        float4 reflectionColor = reflectionPayload.color;
+
+        float3 fresnelR = FresnelReflectanceSchlick(WorldRayDirection(), triangleNormal, diffuseAlbedo.rgb);
+        float4 reflectedColor = reflectanceCoef * float4(fresnelR, 1) * reflectionColor;
+        
+        float4 phongColor = CalculatePhongLighting(gLightPos, diffuseAlbedo, triangleNormal, shadowPayload.IsHit, diffuseCoef, specularCoef, specularPower);
+        color = phongColor + reflectedColor;
+    }
+    else
+    {
+        color = CalculatePhongLighting(gLightPos, diffuseAlbedo, triangleNormal, false, diffuseCoef, specularCoef, specularPower);
+    }
+    
+    payload.color = color;
+
 }

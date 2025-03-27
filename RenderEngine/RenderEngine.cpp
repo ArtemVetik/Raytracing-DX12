@@ -95,17 +95,24 @@ namespace RaytracingDX12
 		m_RaytracingPass = std::make_unique<RaytracingPass>(m_Device.get());
 
 		m_Mesh = std::make_shared<Mesh>(m_Device.get(), "Models\\joseph.fbx");
+		m_Mesh2 = std::make_shared<Mesh>(m_Device.get(), "Models\\Cube.fbx");
 		m_Mesh->Load();
+		m_Mesh2->Load();
 
 		m_PlaneMesh = std::make_shared<Mesh>(m_Device.get(), "Models\\plane.fbx");
 		m_PlaneMesh->Load();
 
 		m_Texture = std::make_unique<Texture>(m_Device.get(), L"Textures\\joseph_albedo.dds");
+		m_Texture2 = std::make_unique<Texture>(m_Device.get(), L"Textures\\white.dds");
 		m_PlaneTexture = std::make_unique<Texture>(m_Device.get(), L"Textures\\tile.dds");
 
 		m_Material = std::make_shared<Material>();
 		m_Material->SetMainTexture(m_Texture.get());
 		m_Material->Load();
+
+		m_Material2 = std::make_shared<Material>();
+		m_Material2->SetMainTexture(m_Texture2.get());
+		m_Material2->Load();
 
 		m_PlaneMaterial = std::make_shared<Material>();
 		m_PlaneMaterial->SetMainTexture(m_PlaneTexture.get());
@@ -115,13 +122,18 @@ namespace RaytracingDX12
 		m_RenderObject->SetMaterial(m_Material.get());
 		m_RenderObject->SetMesh(m_Mesh.get());
 
+		m_RenderObject2 = std::make_shared<RenderObject>();
+		m_RenderObject2->SetMaterial(m_Material2.get());
+		m_RenderObject2->SetMesh(m_Mesh2.get());
+		m_RenderObject2->WorldMatrix = SimpleMath::Matrix::CreateScale(4, 20, 100) * SimpleMath::Matrix::CreateTranslation(-35, 10, 0);
+
 		m_PlaneRenderObject = std::make_shared<RenderObject>();
 		m_PlaneRenderObject->SetMaterial(m_PlaneMaterial.get());
 		m_PlaneRenderObject->SetMesh(m_PlaneMesh.get());
-		m_PlaneRenderObject->WorldMatrix = SimpleMath::Matrix::CreateScale(0.2f) * SimpleMath::Matrix::CreateTranslation(0, -1, 0);
+		m_PlaneRenderObject->WorldMatrix = SimpleMath::Matrix::CreateScale(0.2f) * SimpleMath::Matrix::CreateTranslation(0, -2.5, 0);
 
 		m_AccelerationStructure = std::make_unique<AccelerationStructure>(m_Device.get());
-		m_AccelerationStructure->CreateAccelerationStructures(m_RenderObject.get(), m_PlaneRenderObject.get());
+		m_AccelerationStructure->CreateAccelerationStructures(m_PlaneRenderObject.get(), m_RenderObject.get(), m_RenderObject2.get());
 
 		D3D12_RESOURCE_DESC buffDesc = {};
 		buffDesc.Alignment = 0;
@@ -428,6 +440,17 @@ namespace RaytracingDX12
 
 		m_SbtHelper.AddHitGroup(L"HitGroup",
 			{
+				(void*)m_PlaneMesh->GetVertexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
+				(void*)m_PlaneMesh->GetIndexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
+				(void*)m_PlaneTexture->GetGPUPtr(),
+				tlasPointer,
+				(void*)m_PassUpload->GetD3D12Resource()->GetGPUVirtualAddress(),
+			});
+
+		m_SbtHelper.AddHitGroup(L"ShadowHitGroup", {});
+
+		m_SbtHelper.AddHitGroup(L"HitGroup",
+			{
 				(void*)m_Mesh->GetVertexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
 				(void*)m_Mesh->GetIndexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
 				(void*)m_Texture->GetGPUPtr(),
@@ -439,14 +462,12 @@ namespace RaytracingDX12
 
 		m_SbtHelper.AddHitGroup(L"HitGroup",
 			{
-				(void*)m_PlaneMesh->GetVertexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
-				(void*)m_PlaneMesh->GetIndexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
-				(void*)m_PlaneTexture->GetGPUPtr(),
+				(void*)m_Mesh2->GetVertexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
+				(void*)m_Mesh2->GetIndexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
+				(void*)m_Texture2->GetGPUPtr(),
 				tlasPointer,
 				(void*)m_PassUpload->GetD3D12Resource()->GetGPUVirtualAddress(),
 			});
-
-		m_SbtHelper.AddHitGroup(L"ShadowHitGroup", {});
 
 		uint32_t sbtSize = m_SbtHelper.ComputeSBTSize();
 

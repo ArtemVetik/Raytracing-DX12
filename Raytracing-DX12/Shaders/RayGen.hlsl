@@ -13,8 +13,9 @@ RaytracingAccelerationStructure gSceneBVH : register(t0);
 void RayGen()
 {
     HitInfo payload;
-    payload.colorAndDistance = float4(0, 0, 0, 0);
-
+    payload.color = float4(0, 0, 0, 0);
+    payload.recursionDepth = 0;
+    
     uint2 launchIndex = DispatchRaysIndex().xy;
     
     float2 xy = launchIndex + 0.5f;
@@ -33,5 +34,5 @@ void RayGen()
     
     TraceRay(gSceneBVH, RAY_FLAG_NONE, ~0, 0, 0, 0, ray, payload);
     
-    gOutput[launchIndex] = float4(payload.colorAndDistance.rgb, 1.f);
+    gOutput[launchIndex] = float4(payload.color.rgb, 1.f);
 }

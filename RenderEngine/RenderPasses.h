@@ -152,9 +152,9 @@ namespace RaytracingDX12
 			pipeline.AddRootSignatureAssociation(m_MissSignature.GetD3D12RootSignature(), { L"Miss", L"ShadowMiss"});
 			pipeline.AddRootSignatureAssociation(m_HitSignature.GetD3D12RootSignature(), { L"HitGroup", L"ShadowHitGroup"});
 
-			pipeline.SetMaxPayloadSize(4 * sizeof(float)); // RGB + distance
+			pipeline.SetMaxPayloadSize(4 * sizeof(float) + sizeof(UINT)); // RGB + distance + recursion depth
 			pipeline.SetMaxAttributeSize(2 * sizeof(float)); // barycentric coordinates
-			pipeline.SetMaxRecursionDepth(2);
+			pipeline.SetMaxRecursionDepth(5);
 
 			m_RtStateObject = pipeline.Generate();
 

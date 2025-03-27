@@ -1,22 +1,14 @@
-static const float4 lightAmbientColor = float4(0.8, 0.8, 0.8, 1.0);
-static const float4 lightDiffuseColor = float4(0.5, 0.5, 0.5, 1.0);
-static const float4 lightSpecularColor = float4(1, 1, 1, 1);
+static const float4 lightAmbientColor = float4(0.2, 0.2, 0.2, 1.0);
+static const float4 lightDiffuseColor = float4(0.2, 0.2, 0.2, 1.0);
 static const float diffuseCoef = 0.9;
 static const float specularCoef = 0.7;
 static const float specularPower = 50;
+static const float reflectanceCoef = 0.9;
 static const float InShadowRadiance = 0.35f;
-
-struct VertexPositionNormalTangentTexture
-{
-    float3 Position;
-    float3 Normal;
-    float3 Tangent;
-    float2 TexCoord;
-};
 
 float4 linearToSrgb(float4 c)
 {
-    // Based on http://chilliant.blogspot.com/2012/08/srgb-approximations-for-hlsl.html
+	// Based on http://chilliant.blogspot.com/2012/08/srgb-approximations-for-hlsl.html
     float4 sq1 = sqrt(c);
     float4 sq2 = sqrt(sq1);
     float4 sq3 = sqrt(sq2);
@@ -73,4 +65,11 @@ float4 CalculatePhongLighting(in float3 lightPosition, in float4 albedo, in floa
     ambientColor = albedo * lerp(ambientColorMin, ambientColorMax, a);
 
     return ambientColor + diffuseColor + specularColor;
+}
+
+// Fresnel reflectance - schlick approximation.
+float3 FresnelReflectanceSchlick(in float3 I, in float3 N, in float3 f0)
+{
+    float cosi = saturate(dot(-I, N));
+    return f0 + (1 - f0) * pow(1 - cosi, 5);
 }

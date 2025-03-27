@@ -52,12 +52,16 @@ namespace RaytracingDX12
 		std::unique_ptr<RaytracingPass> m_RaytracingPass;
 
 		std::shared_ptr<Texture> m_Texture;
+		std::shared_ptr<Texture> m_Texture2;
 		std::shared_ptr<Mesh> m_Mesh;
+		std::shared_ptr<Mesh> m_Mesh2;
 		std::shared_ptr<Material> m_Material;
+		std::shared_ptr<Material> m_Material2;
 		std::shared_ptr<Mesh> m_PlaneMesh;
 		std::shared_ptr<Texture> m_PlaneTexture;
 		std::shared_ptr<Material> m_PlaneMaterial;
 		std::shared_ptr<RenderObject> m_RenderObject;
+		std::shared_ptr<RenderObject> m_RenderObject2;
 		std::shared_ptr<RenderObject> m_PlaneRenderObject;
 
 		std::unique_ptr<AccelerationStructure> m_AccelerationStructure;
