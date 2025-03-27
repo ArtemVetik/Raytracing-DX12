@@ -280,6 +280,11 @@ namespace RaytracingDX12
 		}
 	}
 
+	std::wstring RenderEngine::GetAdapterInfo() const
+	{
+		return m_DeviceDesc.Description;
+	}
+
 	void RenderEngine::PendingResize(UINT w, UINT h)
 	{
 		UINT lx, ly, lw, lh;

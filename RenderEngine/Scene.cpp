@@ -108,7 +108,7 @@ namespace RaytracingDX12
 
 	void Scene::Update(const Timer& timer)
 	{
-		m_MainRenderObject->WorldMatrix[0] = SimpleMath::Matrix::CreateScale(0.12f) * SimpleMath::Matrix::CreateRotationY(XM_PIDIV2 * -1.2f) * SimpleMath::Matrix::CreateTranslation(0, -4, 0);
+		m_MainRenderObject->WorldMatrix[0] = SimpleMath::Matrix::CreateScale(0.12f) * SimpleMath::Matrix::CreateRotationY(timer.GetTotalTime()) * SimpleMath::Matrix::CreateTranslation(0, -4, 0);
 		m_MainRenderObject->ObjectUpload[0]->LoadData(&(m_MainRenderObject->WorldMatrix[0].Transpose()));
 
 		float angleStep = XM_2PI / m_SphereRenderObject->InstanceCount;

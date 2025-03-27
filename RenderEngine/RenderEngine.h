@@ -31,6 +31,8 @@ namespace RaytracingDX12
 		void Update(const Timer& timer) override;
 		void Render() override;
 
+		std::wstring GetAdapterInfo() const override;
+
 		void PendingResize(UINT w, UINT h);
 
 		static RenderEngine* GetInstance();

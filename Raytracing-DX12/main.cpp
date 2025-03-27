@@ -10,14 +10,22 @@
 using namespace RaytracingDX12;
 using namespace EduEngine;
 
-void UpdateWindowTitle(HWND window, int rFps, float rMspf)
+void UpdateWindowTitle(Window& window, int rFps, float rMspf, std::wstring device)
 {
+	double MRaysPerSecond = (window.GetClientWidth() * window.GetClientHeight()) / static_cast<double>(1e6) * rFps;
+
 	std::wstringstream out;
-	out.precision(6);
+	out.precision(4);
+	
+	out << "Raytracing - DX12 (" << " fps: " << rFps << " frame time: " << rMspf << " ms)"
+		<< "\t~Million Primary Rays / s: " << MRaysPerSecond << "\tPrimary GPU: " << device;
 
-	out << "Raytracing - DX12 (" << " fps: " << rFps << " frame time: " << rMspf << " ms)";
+	if (MRaysPerSecond < 0)
+	{
+		int aaa = 112;
+	}
 
-	SetWindowText(window, out.str().c_str());
+	SetWindowText(window.GetMainWindow(), out.str().c_str());
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, PSTR cmdLine, int showCmd)
@@ -62,7 +70,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, PSTR cmdLine, in
 			if (!window.IsPaused())
 			{
 				if (timer.UpdateTitleBarStats(fps, mspf))
-					UpdateWindowTitle(window.GetMainWindow(), fps, mspf);
+					UpdateWindowTitle(window, fps, mspf, renderEngine->GetAdapterInfo());
 
 				renderEngine->Update(timer);
 				renderEngine->Render();
