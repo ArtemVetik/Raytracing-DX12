@@ -34,7 +34,7 @@ void ClosestHit(inout HitInfo payload, BuiltInTriangleIntersectionAttributes att
     
     triangleNormal = normalize(mul(triangleNormal, (float3x3) gWorld));
     
-    float texScale = InstanceID() == 0 ? 4 : 1;
+    float2 texScale = InstanceID() == 0 ? 4 : 1;
     float4 diffuseAlbedo = gAlbedo.SampleLevel(gsamPointWrap, texC * texScale, 0) * float4(gDiffuseColor, 1);
     
     float4 color;

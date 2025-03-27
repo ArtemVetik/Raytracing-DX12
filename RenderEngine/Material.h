@@ -12,10 +12,10 @@ namespace RaytracingDX12
 	{
 		DirectX::XMFLOAT3 DiffuseColor = { 1, 1, 1 };
 		float DiffuseCoef = 0.9;
-		float SpecularCoef = 0.7;
-		float SpecularPower = 50;
-		float ReflectanceCoef = 0.9;
-		float InShadowRadiance = 0.35f;
+		float SpecularCoef = 0.6;
+		float SpecularPower = 64;
+		float ReflectanceCoef = 0.7;
+		float InShadowRadiance = 0.6f;
 	};
 
 	class Material

@@ -17,7 +17,7 @@ namespace RaytracingDX12
 	RenderEngine::RenderEngine() :
 		m_Viewport{},
 		m_ScissorRect{},
-		m_LightPos(1000, 1000, -1000)
+		m_LightPos(1000, 2000, -1000)
 	{
 		assert(m_Instance == nullptr);
 		m_Instance = this;

@@ -30,7 +30,6 @@ namespace RaytracingDX12
 
 	private:
 		std::shared_ptr<Texture> m_PlaneTexture;
-		std::shared_ptr<Texture> m_MainTexture;
 		std::shared_ptr<Texture> m_WhiteTexture;
 		std::shared_ptr<Mesh> m_PlaneMesh;
 		std::shared_ptr<Mesh> m_MainMesh;

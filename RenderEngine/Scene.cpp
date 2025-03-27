@@ -8,7 +8,7 @@ namespace RaytracingDX12
 		m_PlaneMesh = std::make_shared<Mesh>(device, "Models\\plane.fbx");
 		m_PlaneMesh->Load();
 
-		m_MainMesh = std::make_shared<Mesh>(device, "Models\\joseph.fbx");
+		m_MainMesh = std::make_shared<Mesh>(device, "Models\\lucy.obj");
 		m_MainMesh->Load();
 
 		m_SphereMesh = std::make_shared<Mesh>(device, "Models\\Sphere.fbx");
@@ -18,7 +18,6 @@ namespace RaytracingDX12
 		m_WallMesh->Load();
 
 		m_PlaneTexture = std::make_unique<Texture>(device, L"Textures\\tile.dds");
-		m_MainTexture = std::make_unique<Texture>(device, L"Textures\\joseph_albedo.dds");
 		m_WhiteTexture = std::make_unique<Texture>(device, L"Textures\\white.dds");
 
 		m_PlaneMaterial = std::make_shared<Material>(device);
@@ -26,11 +25,16 @@ namespace RaytracingDX12
 		m_PlaneMaterial->Load();
 
 		m_MainMaterial = std::make_shared<Material>(device);
-		m_MainMaterial->SetMainTexture(m_MainTexture.get());
+		m_MainMaterial->SetMainTexture(m_WhiteTexture.get());
+		m_MainMaterial->Constants.DiffuseColor = { 0.75f, 0.73f, 0.70f };
+		m_MainMaterial->Constants.ReflectanceCoef = 0.7f;
+		m_MainMaterial->Constants.DiffuseCoef = 1.0f;
+		m_MainMaterial->Constants.SpecularCoef = 0.01f;
 		m_MainMaterial->Load();
 
 		m_WhiteMaterial = std::make_shared<Material>(device);
 		m_WhiteMaterial->SetMainTexture(m_WhiteTexture.get());
+		m_WhiteMaterial->Constants.SpecularCoef = 0.1f;
 		m_WhiteMaterial->Load();
 
 		m_PlaneRenderObject = std::make_shared<RenderObject>();
@@ -104,21 +108,21 @@ namespace RaytracingDX12
 
 	void Scene::Update(const Timer& timer)
 	{
-		m_MainRenderObject->WorldMatrix[0] = SimpleMath::Matrix::CreateScale(8.0f) * SimpleMath::Matrix::CreateRotationY(timer.GetTotalTime());
+		m_MainRenderObject->WorldMatrix[0] = SimpleMath::Matrix::CreateScale(0.08f) * SimpleMath::Matrix::CreateRotationY(timer.GetTotalTime()) * SimpleMath::Matrix::CreateTranslation(0, -4, 0);
 		m_MainRenderObject->ObjectUpload[0]->LoadData(&(m_MainRenderObject->WorldMatrix[0].Transpose()));
 
 		float angleStep = XM_2PI / m_SphereRenderObject->InstanceCount;
 		float radius = 70;
 		for (size_t i = 0; i < m_SphereRenderObject->InstanceCount; i++)
 		{
-			float angle = i * angleStep;
+			float angle = i * angleStep - 0.1f * timer.GetTotalTime();
 
 			float x = radius * cos(angle);
 			float z = radius * sin(angle);
 
 			float y = 15 + sin(angle + timer.GetTotalTime()) * 5.0f;
 
-			m_SphereRenderObject->WorldMatrix[i] = SimpleMath::Matrix::CreateScale(8) * SimpleMath::Matrix::CreateTranslation(x, y, z);
+			m_SphereRenderObject->WorldMatrix[i] = SimpleMath::Matrix::CreateScale(6) * SimpleMath::Matrix::CreateTranslation(x, y, z);
 			m_SphereRenderObject->ObjectUpload[i]->LoadData(&(m_SphereRenderObject->WorldMatrix[0].Transpose()));
 		}
 	}

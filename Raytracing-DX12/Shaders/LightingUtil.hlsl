@@ -1,7 +1,7 @@
 #include "HitBuffers.hlsl"
 
-static const float4 lightAmbientColor = float4(0.2, 0.2, 0.2, 1.0);
-static const float4 lightDiffuseColor = float4(0.2, 0.2, 0.2, 1.0);
+static const float4 lightAmbientColor = float4(0.25, 0.25, 0.3, 1.0);
+static const float4 lightDiffuseColor = float4(0.5f, 0.4f, 0.3f, 1.0);
 
 float4 linearToSrgb(float4 c)
 {
