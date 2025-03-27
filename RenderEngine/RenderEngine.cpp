@@ -94,65 +94,95 @@ namespace RaytracingDX12
 		m_ColorPass = std::make_unique<ColorPass>(m_Device.get());
 		m_RaytracingPass = std::make_unique<RaytracingPass>(m_Device.get());
 
-		m_Mesh = std::make_shared<Mesh>(m_Device.get(), "Models\\joseph.fbx");
-		m_Mesh2 = std::make_shared<Mesh>(m_Device.get(), "Models\\Cube.fbx");
-		m_Mesh->Load();
-		m_Mesh2->Load();
-
 		m_PlaneMesh = std::make_shared<Mesh>(m_Device.get(), "Models\\plane.fbx");
 		m_PlaneMesh->Load();
 
-		m_Texture = std::make_unique<Texture>(m_Device.get(), L"Textures\\joseph_albedo.dds");
-		m_Texture2 = std::make_unique<Texture>(m_Device.get(), L"Textures\\white.dds");
+		m_MainMesh = std::make_shared<Mesh>(m_Device.get(), "Models\\joseph.fbx");
+		m_MainMesh->Load();
+
+		m_SphereMesh = std::make_shared<Mesh>(m_Device.get(), "Models\\Sphere.fbx");
+		m_SphereMesh->Load();
+
+		m_WallMesh = std::make_shared<Mesh>(m_Device.get(), "Models\\Cube.fbx");
+		m_WallMesh->Load();
+
 		m_PlaneTexture = std::make_unique<Texture>(m_Device.get(), L"Textures\\tile.dds");
-
-		m_Material = std::make_shared<Material>();
-		m_Material->SetMainTexture(m_Texture.get());
-		m_Material->Load();
-
-		m_Material2 = std::make_shared<Material>();
-		m_Material2->SetMainTexture(m_Texture2.get());
-		m_Material2->Load();
+		m_MainTexture = std::make_unique<Texture>(m_Device.get(), L"Textures\\joseph_albedo.dds");
+		m_WhiteTexture = std::make_unique<Texture>(m_Device.get(), L"Textures\\white.dds");
 
 		m_PlaneMaterial = std::make_shared<Material>();
 		m_PlaneMaterial->SetMainTexture(m_PlaneTexture.get());
 		m_PlaneMaterial->Load();
 
-		m_RenderObject = std::make_shared<RenderObject>();
-		m_RenderObject->SetMaterial(m_Material.get());
-		m_RenderObject->SetMesh(m_Mesh.get());
+		m_MainMaterial = std::make_shared<Material>();
+		m_MainMaterial->SetMainTexture(m_MainTexture.get());
+		m_MainMaterial->Load();
 
-		m_RenderObject2 = std::make_shared<RenderObject>();
-		m_RenderObject2->SetMaterial(m_Material2.get());
-		m_RenderObject2->SetMesh(m_Mesh2.get());
-		m_RenderObject2->WorldMatrix = SimpleMath::Matrix::CreateScale(4, 20, 100) * SimpleMath::Matrix::CreateTranslation(-35, 10, 0);
+		m_WhiteMaterial = std::make_shared<Material>();
+		m_WhiteMaterial->SetMainTexture(m_WhiteTexture.get());
+		m_WhiteMaterial->Load();
 
 		m_PlaneRenderObject = std::make_shared<RenderObject>();
 		m_PlaneRenderObject->SetMaterial(m_PlaneMaterial.get());
 		m_PlaneRenderObject->SetMesh(m_PlaneMesh.get());
-		m_PlaneRenderObject->WorldMatrix = SimpleMath::Matrix::CreateScale(0.2f) * SimpleMath::Matrix::CreateTranslation(0, -2.5, 0);
+		m_PlaneRenderObject->InstanceCount = 1;
+		m_PlaneRenderObject->WorldMatrix[0] = SimpleMath::Matrix::CreateScale(0.5f) * SimpleMath::Matrix::CreateTranslation(0, -2.5, 0);
+		m_PlaneRenderObject->ObjectUpload[0] = std::make_unique<UploadBufferD3D12>(m_Device.get(), CD3DX12_RESOURCE_DESC::Buffer(sizeof(RaytracingPass::ObjectConstants)), QueueID::Direct);
+		m_PlaneRenderObject->ObjectUpload[0]->LoadData(&(m_PlaneRenderObject->WorldMatrix[0].Transpose()));
+
+		m_MainRenderObject = std::make_shared<RenderObject>();
+		m_MainRenderObject->SetMaterial(m_MainMaterial.get());
+		m_MainRenderObject->SetMesh(m_MainMesh.get());
+		m_MainRenderObject->InstanceCount = 1;
+		m_MainRenderObject->ObjectUpload[0] = std::make_unique<UploadBufferD3D12>(m_Device.get(), CD3DX12_RESOURCE_DESC::Buffer(sizeof(RaytracingPass::ObjectConstants)), QueueID::Direct);
+
+		m_SphereRenderObject = std::make_shared<RenderObject>();
+		m_SphereRenderObject->SetMaterial(m_WhiteMaterial.get());
+		m_SphereRenderObject->SetMesh(m_SphereMesh.get());
+		m_SphereRenderObject->InstanceCount = 15;
+		for (size_t i = 0; i < m_SphereRenderObject->InstanceCount; i++)
+		{
+			srand(i * 123);
+			auto scale = 4 + rand() % 2;
+			auto radius = 30 + rand() % 70;
+			auto phi = rand();
+
+			auto x = cos(phi) * radius;
+			auto z = sin(phi) * radius;
+			auto y = 5 + rand() % 10;
+
+			m_SphereRenderObject->WorldMatrix[i] = SimpleMath::Matrix::CreateScale(scale) * SimpleMath::Matrix::CreateTranslation(x, y, z);
+			m_SphereRenderObject->ObjectUpload[i] = std::make_unique<UploadBufferD3D12>(m_Device.get(), CD3DX12_RESOURCE_DESC::Buffer(sizeof(RaytracingPass::ObjectConstants)), QueueID::Direct);
+			m_SphereRenderObject->ObjectUpload[i]->LoadData(&(m_SphereRenderObject->WorldMatrix[0].Transpose()));
+		}
+
+		m_WallRenderObject = std::make_shared<RenderObject>();
+		m_WallRenderObject->SetMaterial(m_WhiteMaterial.get());
+		m_WallRenderObject->SetMesh(m_WallMesh.get());
+		m_WallRenderObject->InstanceCount = 2;
+		m_WallRenderObject->WorldMatrix[0] = SimpleMath::Matrix::CreateScale(4, 80, 200) * SimpleMath::Matrix::CreateTranslation(-100, 40, 0);
+		m_WallRenderObject->WorldMatrix[1] = SimpleMath::Matrix::CreateScale(4, 80, 200) * SimpleMath::Matrix::CreateTranslation(+100, 40, 0);
+		m_WallRenderObject->ObjectUpload[0] = std::make_unique<UploadBufferD3D12>(m_Device.get(), CD3DX12_RESOURCE_DESC::Buffer(sizeof(RaytracingPass::ObjectConstants)), QueueID::Direct);
+		m_WallRenderObject->ObjectUpload[0]->LoadData(&(m_WallRenderObject->WorldMatrix[0].Transpose()));
+		m_WallRenderObject->ObjectUpload[1] = std::make_unique<UploadBufferD3D12>(m_Device.get(), CD3DX12_RESOURCE_DESC::Buffer(sizeof(RaytracingPass::ObjectConstants)), QueueID::Direct);
+		m_WallRenderObject->ObjectUpload[1]->LoadData(&(m_WallRenderObject->WorldMatrix[1].Transpose()));
 
 		m_AccelerationStructure = std::make_unique<AccelerationStructure>(m_Device.get());
-		m_AccelerationStructure->CreateAccelerationStructures(m_PlaneRenderObject.get(), m_RenderObject.get(), m_RenderObject2.get());
 
-		D3D12_RESOURCE_DESC buffDesc = {};
-		buffDesc.Alignment = 0;
-		buffDesc.DepthOrArraySize = 1;
-		buffDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-		buffDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
-		buffDesc.Format = DXGI_FORMAT_UNKNOWN;
-		buffDesc.Height = 1;
-		buffDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-		buffDesc.MipLevels = 1;
-		buffDesc.SampleDesc.Count = 1;
-		buffDesc.SampleDesc.Quality = 0;
-		buffDesc.Width = sizeof(RaytracingPass::PassConstants);
+		RenderObject* objects[] =
+		{
+			m_PlaneRenderObject.get(),
+			m_MainRenderObject.get(),
+			m_SphereRenderObject.get(),
+			m_WallRenderObject.get(),
+		};
 
-		m_PassUpload = std::make_unique<UploadBufferD3D12>(m_Device.get(), buffDesc, QueueID::Direct);
+		m_AccelerationStructure->CreateAccelerationStructures(objects, 4);
+
+		m_PassUpload = std::make_unique<UploadBufferD3D12>(m_Device.get(), CD3DX12_RESOURCE_DESC::Buffer(sizeof(RaytracingPass::PassConstants)), QueueID::Direct);
 		m_PassUpload->SetName(L"PassBuffer");
 
-		buffDesc.Width = sizeof(RaytracingPass::CameraConstants);
-		m_CamUpload = std::make_unique<UploadBufferD3D12>(m_Device.get(), buffDesc, QueueID::Direct);
+		m_CamUpload = std::make_unique<UploadBufferD3D12>(m_Device.get(), CD3DX12_RESOURCE_DESC::Buffer(sizeof(RaytracingPass::CameraConstants)), QueueID::Direct);
 		m_CamUpload->SetName(L"CameraBuffer");
 
 		ResizeOutputBuffer();
@@ -223,7 +253,7 @@ namespace RaytracingDX12
 		RaytracingPass::PassConstants passConstants;
 		passConstants.LightPos = m_LightPos;
 		passConstants.CamPos = m_Camera->GetPosition();
-		passConstants.World = m_RenderObject->WorldMatrix.Transpose();
+		m_PassUpload->LoadData(&passConstants);
 
 		XMMATRIX view = XMLoadFloat4x4(&m_Camera->GetViewMatrix());
 		XMMATRIX proj = XMLoadFloat4x4(&m_Camera->GetProjectionMatrix());
@@ -232,12 +262,12 @@ namespace RaytracingDX12
 		RaytracingPass::CameraConstants camConstants;
 		camConstants.CamPos = { m_Camera->GetPosition().x, m_Camera->GetPosition().y, m_Camera->GetPosition().z, 0 };
 		camConstants.ViewProjInv = XMMatrixTranspose(XMMatrixInverse(nullptr, viewProj));
-
-		m_RenderObject->WorldMatrix = SimpleMath::Matrix::CreateScale(2.0f) * SimpleMath::Matrix::CreateRotationY(timer.GetTotalTime());
-
-		m_AccelerationStructure->Update(m_RenderObject->WorldMatrix);
-		m_PassUpload->LoadData(&passConstants);
 		m_CamUpload->LoadData(&camConstants);
+
+		m_MainRenderObject->WorldMatrix[0] = SimpleMath::Matrix::CreateScale(6.0f) * SimpleMath::Matrix::CreateRotationY(timer.GetTotalTime());
+		m_MainRenderObject->ObjectUpload[0]->LoadData(&(m_MainRenderObject->WorldMatrix[0].Transpose()));
+
+		m_AccelerationStructure->Update(m_MainRenderObject->WorldMatrix[0]);
 	}
 
 	void RenderEngine::Render()
@@ -312,7 +342,7 @@ namespace RaytracingDX12
 			dCommandContext.GetCmdList()->SetGraphicsRootSignature(m_ColorPass->GetD3D12RootSignature());
 
 			ColorPass::ObjectConstants objConstants;
-			objConstants.World = m_RenderObject->WorldMatrix.Transpose();
+			objConstants.World = m_MainRenderObject->WorldMatrix[0].Transpose();
 
 			ColorPass::PassConstants passConstants;
 			XMStoreFloat4x4(&passConstants.ViewProj, XMMatrixTranspose(m_Camera->GetViewProjMatrix()));
@@ -324,18 +354,18 @@ namespace RaytracingDX12
 			passBuffer.LoadData(passConstants);
 
 			D3D12_GPU_DESCRIPTOR_HANDLE albedoTex = {};
-			albedoTex.ptr = reinterpret_cast<UINT64>(m_Texture->GetGPUPtr());
+			albedoTex.ptr = reinterpret_cast<UINT64>(m_MainTexture->GetGPUPtr());
 			dCommandContext.GetCmdList()->SetGraphicsRootDescriptorTable(0, albedoTex);
 			dCommandContext.GetCmdList()->SetGraphicsRootConstantBufferView(1, objBuffer.GetAllocation().GPUAddress);
 			dCommandContext.GetCmdList()->SetGraphicsRootConstantBufferView(2, passBuffer.GetAllocation().GPUAddress);
 
-			dCommandContext.GetCmdList()->IASetVertexBuffers(0, 1, &(m_RenderObject->GetVertexBuffer()->GetView()));
-			dCommandContext.GetCmdList()->IASetIndexBuffer(&(m_RenderObject->GetIndexBuffer()->GetView()));
+			dCommandContext.GetCmdList()->IASetVertexBuffers(0, 1, &(m_MainRenderObject->GetVertexBuffer()->GetView()));
+			dCommandContext.GetCmdList()->IASetIndexBuffer(&(m_MainRenderObject->GetIndexBuffer()->GetView()));
 			dCommandContext.GetCmdList()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-			dCommandContext.GetCmdList()->DrawIndexedInstanced(m_RenderObject->GetIndexBuffer()->GetLength(), 1, 0, 0, 0);
+			dCommandContext.GetCmdList()->DrawIndexedInstanced(m_MainRenderObject->GetIndexBuffer()->GetLength(), 1, 0, 0, 0);
 
-			objConstants.World = m_PlaneRenderObject->WorldMatrix.Transpose();
+			objConstants.World = m_PlaneRenderObject->WorldMatrix[0].Transpose();
 			DynamicUploadBuffer planeObjBuffer(m_Device.get(), QueueID::Direct);
 			planeObjBuffer.LoadData(objConstants);
 
@@ -438,36 +468,69 @@ namespace RaytracingDX12
 		m_SbtHelper.AddMissProgram(L"Miss", { (void*)m_MissPadding->GetD3D12Resource()->GetGPUVirtualAddress() });
 		m_SbtHelper.AddMissProgram(L"ShadowMiss", {});
 
-		m_SbtHelper.AddHitGroup(L"HitGroup",
+		// Plane
+		{
+			m_SbtHelper.AddHitGroup(L"HitGroup",
+				{
+					(void*)m_PlaneMesh->GetVertexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
+					(void*)m_PlaneMesh->GetIndexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
+					(void*)m_PlaneTexture->GetGPUPtr(),
+					tlasPointer,
+					(void*)m_PassUpload->GetD3D12Resource()->GetGPUVirtualAddress(),
+					(void*)m_PlaneRenderObject->ObjectUpload[0]->GetD3D12Resource()->GetGPUVirtualAddress(),
+				});
+
+			m_SbtHelper.AddHitGroup(L"ShadowHitGroup", {});
+		}
+
+		// Main Object
+		{
+			m_SbtHelper.AddHitGroup(L"HitGroup",
+				{
+					(void*)m_MainMesh->GetVertexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
+					(void*)m_MainMesh->GetIndexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
+					(void*)m_MainTexture->GetGPUPtr(),
+					tlasPointer,
+					(void*)m_PassUpload->GetD3D12Resource()->GetGPUVirtualAddress(),
+					(void*)m_MainRenderObject->ObjectUpload[0]->GetD3D12Resource()->GetGPUVirtualAddress(),
+				});
+
+			m_SbtHelper.AddHitGroup(L"ShadowHitGroup", {});
+		}
+
+		// Spheres
+		for (size_t i = 0; i < m_SphereRenderObject->InstanceCount; i++)
+		{
 			{
-				(void*)m_PlaneMesh->GetVertexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
-				(void*)m_PlaneMesh->GetIndexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
-				(void*)m_PlaneTexture->GetGPUPtr(),
-				tlasPointer,
-				(void*)m_PassUpload->GetD3D12Resource()->GetGPUVirtualAddress(),
-			});
+				m_SbtHelper.AddHitGroup(L"HitGroup",
+					{
+						(void*)m_SphereMesh->GetVertexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
+						(void*)m_SphereMesh->GetIndexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
+						(void*)m_WhiteTexture->GetGPUPtr(),
+						tlasPointer,
+						(void*)m_PassUpload->GetD3D12Resource()->GetGPUVirtualAddress(),
+						(void*)m_SphereRenderObject->ObjectUpload[i]->GetD3D12Resource()->GetGPUVirtualAddress(),
+					});
 
-		m_SbtHelper.AddHitGroup(L"ShadowHitGroup", {});
+				m_SbtHelper.AddHitGroup(L"ShadowHitGroup", {});
+			}
+		}
 
-		m_SbtHelper.AddHitGroup(L"HitGroup",
-			{
-				(void*)m_Mesh->GetVertexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
-				(void*)m_Mesh->GetIndexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
-				(void*)m_Texture->GetGPUPtr(),
-				tlasPointer,
-				(void*)m_PassUpload->GetD3D12Resource()->GetGPUVirtualAddress(),
-			});
+		// Walls
+		for (size_t i = 0; i < m_WallRenderObject->InstanceCount; i++)
+		{
+			m_SbtHelper.AddHitGroup(L"HitGroup",
+				{
+					(void*)m_WallMesh->GetVertexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
+					(void*)m_WallMesh->GetIndexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
+					(void*)m_WhiteTexture->GetGPUPtr(),
+					tlasPointer,
+					(void*)m_PassUpload->GetD3D12Resource()->GetGPUVirtualAddress(),
+					(void*)m_WallRenderObject->ObjectUpload[i]->GetD3D12Resource()->GetGPUVirtualAddress(),
+				});
 
-		m_SbtHelper.AddHitGroup(L"ShadowHitGroup", {});
-
-		m_SbtHelper.AddHitGroup(L"HitGroup",
-			{
-				(void*)m_Mesh2->GetVertexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
-				(void*)m_Mesh2->GetIndexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
-				(void*)m_Texture2->GetGPUPtr(),
-				tlasPointer,
-				(void*)m_PassUpload->GetD3D12Resource()->GetGPUVirtualAddress(),
-			});
+			m_SbtHelper.AddHitGroup(L"ShadowHitGroup", {});
+		}
 
 		uint32_t sbtSize = m_SbtHelper.ComputeSBTSize();
 

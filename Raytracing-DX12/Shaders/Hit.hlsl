@@ -33,6 +33,10 @@ cbuffer gPassCB : register(b0)
     uint gPadding;
     float3 gCamPos;
     uint gPadding1;
+}
+
+cbuffer gObjectCB : register(b1)
+{
     float4x4 gWorld;
 }
 
@@ -66,8 +70,7 @@ void ClosestHit(inout HitInfo payload, BuiltInTriangleIntersectionAttributes att
     float2 texC = HitAttribute(vertexTexC, attrib).xy;
     float3 triangleNormal = HitAttribute(vertexNormals, attrib);
     
-    if (InstanceID() == 1)
-        triangleNormal = mul(triangleNormal, (float3x3) gWorld);
+    triangleNormal = normalize(mul(triangleNormal, (float3x3) gWorld));
     
     float texScale = InstanceID() == 0 ? 4 : 1;
     float4 diffuseAlbedo = gAlbedo.SampleLevel(gsamPointWrap, texC * texScale, 0);
@@ -122,5 +125,4 @@ void ClosestHit(inout HitInfo payload, BuiltInTriangleIntersectionAttributes att
     }
     
     payload.color = color;
-
 }

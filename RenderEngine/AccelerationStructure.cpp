@@ -11,18 +11,19 @@ namespace RaytracingDX12
 	{
 	}
 
-	void AccelerationStructure::CreateAccelerationStructures(RenderObject* plane, RenderObject* mainObject, RenderObject* mainObject2)
+	void AccelerationStructure::CreateAccelerationStructures(RenderObject** renderObjects, int size)
 	{
-		AccelerationStructureBuffers planeBottomLevelBuffers = CreateBottomLevelAS({ plane->GetMesh() });
-		AccelerationStructureBuffers bottomLevelBuffers = CreateBottomLevelAS({ mainObject->GetMesh() });
-		AccelerationStructureBuffers bottomLevelBuffers2 = CreateBottomLevelAS({ mainObject2->GetMesh() });
+		std::vector<AccelerationStructureBuffers> blas(size);
 
-		m_Instances =
+		for (size_t i = 0; i < size; i++)
 		{
-			{planeBottomLevelBuffers.pResult, plane->WorldMatrix },
-			{bottomLevelBuffers.pResult, mainObject->WorldMatrix },
-			{bottomLevelBuffers2.pResult, mainObject2->WorldMatrix },
-		};
+			blas[i] = CreateBottomLevelAS({ renderObjects[i]->GetMesh() });
+
+			for (size_t j = 0; j < renderObjects[i]->InstanceCount; j++)
+			{
+				m_Instances.push_back({ blas[i].pResult, renderObjects[i]->WorldMatrix[j]});
+			}
+		}
 
 		CreateTopLevelAS(m_Instances);
 
@@ -33,8 +34,6 @@ namespace RaytracingDX12
 		commandQueue.Flush();
 
 		commandContext.Reset();
-
-		m_BottomLevelAS = bottomLevelBuffers.pResult;
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc;
 		srvDesc.Format = DXGI_FORMAT_UNKNOWN;

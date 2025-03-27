@@ -26,7 +26,11 @@ namespace RaytracingDX12
 		Mesh* GetMesh() const { return m_Mesh; }
 		Material* GetMaterial() const { return m_Material; }
 
-		DirectX::SimpleMath::Matrix WorldMatrix = DirectX::SimpleMath::Matrix::Identity;
+		static constexpr int MaxInstances = 16;
+
+		int InstanceCount = 1;
+		std::unique_ptr<UploadBufferD3D12> ObjectUpload[MaxInstances] = {};
+		DirectX::SimpleMath::Matrix WorldMatrix[MaxInstances] = { DirectX::SimpleMath::Matrix::Identity };
 		DirectX::SimpleMath::Matrix TextureTransform = DirectX::SimpleMath::Matrix::Identity;
 
 	private:

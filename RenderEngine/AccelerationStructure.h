@@ -21,7 +21,7 @@ namespace RaytracingDX12
 	public:
 		AccelerationStructure(RenderDeviceD3D12* device);
 
-		void CreateAccelerationStructures(RenderObject* plane, RenderObject* mainObject, RenderObject* mainObject2);
+		void CreateAccelerationStructures(RenderObject** renderObjects, int size);
 		void CreateTopLevelAS(bool updateOnly = false);
 		
 		void Update(DirectX::XMMATRIX world);
@@ -41,7 +41,6 @@ namespace RaytracingDX12
 
 	private:
 		RenderDeviceD3D12* m_Device;
-		ComPtr<ID3D12Resource> m_BottomLevelAS;
 
 		nv_helpers_dx12::TopLevelASGenerator m_TopLevelASGenerator;
 		AccelerationStructureBuffers m_TopLevelASBuffers;

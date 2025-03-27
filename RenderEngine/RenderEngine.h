@@ -51,18 +51,20 @@ namespace RaytracingDX12
 		std::unique_ptr<ColorPass> m_ColorPass;
 		std::unique_ptr<RaytracingPass> m_RaytracingPass;
 
-		std::shared_ptr<Texture> m_Texture;
-		std::shared_ptr<Texture> m_Texture2;
-		std::shared_ptr<Mesh> m_Mesh;
-		std::shared_ptr<Mesh> m_Mesh2;
-		std::shared_ptr<Material> m_Material;
-		std::shared_ptr<Material> m_Material2;
-		std::shared_ptr<Mesh> m_PlaneMesh;
 		std::shared_ptr<Texture> m_PlaneTexture;
+		std::shared_ptr<Texture> m_MainTexture;
+		std::shared_ptr<Texture> m_WhiteTexture;
+		std::shared_ptr<Mesh> m_PlaneMesh;
+		std::shared_ptr<Mesh> m_MainMesh;
+		std::shared_ptr<Mesh> m_SphereMesh;
+		std::shared_ptr<Mesh> m_WallMesh;
 		std::shared_ptr<Material> m_PlaneMaterial;
-		std::shared_ptr<RenderObject> m_RenderObject;
-		std::shared_ptr<RenderObject> m_RenderObject2;
+		std::shared_ptr<Material> m_MainMaterial;
+		std::shared_ptr<Material> m_WhiteMaterial;
 		std::shared_ptr<RenderObject> m_PlaneRenderObject;
+		std::shared_ptr<RenderObject> m_MainRenderObject;
+		std::shared_ptr<RenderObject> m_SphereRenderObject;
+		std::shared_ptr<RenderObject> m_WallRenderObject;
 
 		std::unique_ptr<AccelerationStructure> m_AccelerationStructure;
 		std::unique_ptr<BufferD3D12> m_MissPadding;

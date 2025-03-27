@@ -78,6 +78,10 @@ namespace RaytracingDX12
 			UINT Padding;
 			XMFLOAT3 CamPos;
 			UINT Padding1;
+		};
+
+		struct ObjectConstants
+		{
 			XMMATRIX World;
 		};
 
@@ -131,6 +135,7 @@ namespace RaytracingDX12
 			m_HitSignature.AddDescriptorParameter(1, &tlasHit); // TLAS
 
 			m_HitSignature.AddConstantBufferView(0); // pass
+			m_HitSignature.AddConstantBufferView(1); // object
 
 			m_HitSignature.Build(device, QueueID::Direct, true);
 			m_HitSignature.SetName(L"HitSignature");
