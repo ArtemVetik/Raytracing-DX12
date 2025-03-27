@@ -165,6 +165,7 @@
     <ClInclude Include="RenderEngine.h" />
     <ClInclude Include="RenderObject.h" />
     <ClInclude Include="RenderPasses.h" />
+    <ClInclude Include="Scene.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="Window.h" />
@@ -183,6 +184,7 @@
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="RenderEngine.cpp" />
     <ClCompile Include="RenderObject.cpp" />
+    <ClCompile Include="Scene.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="Timer.cpp" />
     <ClCompile Include="Window.cpp" />

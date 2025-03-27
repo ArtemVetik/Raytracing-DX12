@@ -24,7 +24,7 @@ namespace RaytracingDX12
 		void CreateAccelerationStructures(RenderObject** renderObjects, int size);
 		void CreateTopLevelAS(bool updateOnly = false);
 		
-		void Update(DirectX::XMMATRIX world);
+		void Update(RenderObject** renderObjects, int size);
 
 		BufferHeapView* GetSrvView() const { return m_SrvView.get(); }
 

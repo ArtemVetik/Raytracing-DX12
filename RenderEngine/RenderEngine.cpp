@@ -15,7 +15,6 @@ namespace RaytracingDX12
 	}
 
 	RenderEngine::RenderEngine() :
-		m_Raster(false),
 		m_Viewport{},
 		m_ScissorRect{},
 		m_LightPos(1000, 1000, -1000)
@@ -94,86 +93,16 @@ namespace RaytracingDX12
 		m_ColorPass = std::make_unique<ColorPass>(m_Device.get());
 		m_RaytracingPass = std::make_unique<RaytracingPass>(m_Device.get());
 
-		m_PlaneMesh = std::make_shared<Mesh>(m_Device.get(), "Models\\plane.fbx");
-		m_PlaneMesh->Load();
+		m_Scene = std::make_unique<Scene>(m_Device.get());
 
-		m_MainMesh = std::make_shared<Mesh>(m_Device.get(), "Models\\joseph.fbx");
-		m_MainMesh->Load();
-
-		m_SphereMesh = std::make_shared<Mesh>(m_Device.get(), "Models\\Sphere.fbx");
-		m_SphereMesh->Load();
-
-		m_WallMesh = std::make_shared<Mesh>(m_Device.get(), "Models\\Cube.fbx");
-		m_WallMesh->Load();
-
-		m_PlaneTexture = std::make_unique<Texture>(m_Device.get(), L"Textures\\tile.dds");
-		m_MainTexture = std::make_unique<Texture>(m_Device.get(), L"Textures\\joseph_albedo.dds");
-		m_WhiteTexture = std::make_unique<Texture>(m_Device.get(), L"Textures\\white.dds");
-
-		m_PlaneMaterial = std::make_shared<Material>();
-		m_PlaneMaterial->SetMainTexture(m_PlaneTexture.get());
-		m_PlaneMaterial->Load();
-
-		m_MainMaterial = std::make_shared<Material>();
-		m_MainMaterial->SetMainTexture(m_MainTexture.get());
-		m_MainMaterial->Load();
-
-		m_WhiteMaterial = std::make_shared<Material>();
-		m_WhiteMaterial->SetMainTexture(m_WhiteTexture.get());
-		m_WhiteMaterial->Load();
-
-		m_PlaneRenderObject = std::make_shared<RenderObject>();
-		m_PlaneRenderObject->SetMaterial(m_PlaneMaterial.get());
-		m_PlaneRenderObject->SetMesh(m_PlaneMesh.get());
-		m_PlaneRenderObject->InstanceCount = 1;
-		m_PlaneRenderObject->WorldMatrix[0] = SimpleMath::Matrix::CreateScale(0.5f) * SimpleMath::Matrix::CreateTranslation(0, -2.5, 0);
-		m_PlaneRenderObject->ObjectUpload[0] = std::make_unique<UploadBufferD3D12>(m_Device.get(), CD3DX12_RESOURCE_DESC::Buffer(sizeof(RaytracingPass::ObjectConstants)), QueueID::Direct);
-		m_PlaneRenderObject->ObjectUpload[0]->LoadData(&(m_PlaneRenderObject->WorldMatrix[0].Transpose()));
-
-		m_MainRenderObject = std::make_shared<RenderObject>();
-		m_MainRenderObject->SetMaterial(m_MainMaterial.get());
-		m_MainRenderObject->SetMesh(m_MainMesh.get());
-		m_MainRenderObject->InstanceCount = 1;
-		m_MainRenderObject->ObjectUpload[0] = std::make_unique<UploadBufferD3D12>(m_Device.get(), CD3DX12_RESOURCE_DESC::Buffer(sizeof(RaytracingPass::ObjectConstants)), QueueID::Direct);
-
-		m_SphereRenderObject = std::make_shared<RenderObject>();
-		m_SphereRenderObject->SetMaterial(m_WhiteMaterial.get());
-		m_SphereRenderObject->SetMesh(m_SphereMesh.get());
-		m_SphereRenderObject->InstanceCount = 16;
-		for (size_t i = 0; i < m_SphereRenderObject->InstanceCount; i++)
-		{
-			auto scale = 4 + rand() % 2;
-			auto radius = 30 + rand() % 70;
-			auto phi = rand();
-
-			auto x = cos(phi) * radius;
-			auto z = sin(phi) * radius;
-			auto y = 5 + rand() % 20;
-
-			m_SphereRenderObject->WorldMatrix[i] = SimpleMath::Matrix::CreateScale(scale) * SimpleMath::Matrix::CreateTranslation(x, y, z);
-			m_SphereRenderObject->ObjectUpload[i] = std::make_unique<UploadBufferD3D12>(m_Device.get(), CD3DX12_RESOURCE_DESC::Buffer(sizeof(RaytracingPass::ObjectConstants)), QueueID::Direct);
-			m_SphereRenderObject->ObjectUpload[i]->LoadData(&(m_SphereRenderObject->WorldMatrix[0].Transpose()));
-		}
-
-		m_WallRenderObject = std::make_shared<RenderObject>();
-		m_WallRenderObject->SetMaterial(m_WhiteMaterial.get());
-		m_WallRenderObject->SetMesh(m_WallMesh.get());
-		m_WallRenderObject->InstanceCount = 2;
-		m_WallRenderObject->WorldMatrix[0] = SimpleMath::Matrix::CreateScale(4, 80, 200) * SimpleMath::Matrix::CreateTranslation(-100, 40, 0);
-		m_WallRenderObject->WorldMatrix[1] = SimpleMath::Matrix::CreateScale(4, 80, 200) * SimpleMath::Matrix::CreateTranslation(+100, 40, 0);
-		m_WallRenderObject->ObjectUpload[0] = std::make_unique<UploadBufferD3D12>(m_Device.get(), CD3DX12_RESOURCE_DESC::Buffer(sizeof(RaytracingPass::ObjectConstants)), QueueID::Direct);
-		m_WallRenderObject->ObjectUpload[0]->LoadData(&(m_WallRenderObject->WorldMatrix[0].Transpose()));
-		m_WallRenderObject->ObjectUpload[1] = std::make_unique<UploadBufferD3D12>(m_Device.get(), CD3DX12_RESOURCE_DESC::Buffer(sizeof(RaytracingPass::ObjectConstants)), QueueID::Direct);
-		m_WallRenderObject->ObjectUpload[1]->LoadData(&(m_WallRenderObject->WorldMatrix[1].Transpose()));
-		
 		m_AccelerationStructure = std::make_unique<AccelerationStructure>(m_Device.get());
 
 		RenderObject* objects[] =
 		{
-			m_PlaneRenderObject.get(),
-			m_MainRenderObject.get(),
-			m_SphereRenderObject.get(),
-			m_WallRenderObject.get(),
+			m_Scene->GetPlane(),
+			m_Scene->GetMain(),
+			m_Scene->GetSphere(),
+			m_Scene->GetWall(),
 		};
 
 		m_AccelerationStructure->CreateAccelerationStructures(objects, 4);
@@ -183,22 +112,6 @@ namespace RaytracingDX12
 
 		m_CamUpload = std::make_unique<UploadBufferD3D12>(m_Device.get(), CD3DX12_RESOURCE_DESC::Buffer(sizeof(RaytracingPass::CameraConstants)), QueueID::Direct);
 		m_CamUpload->SetName(L"CameraBuffer");
-
-		for (size_t i = 0; i < 5; i++)
-		{
-			m_MaterialUpload[i] = std::make_unique<UploadBufferD3D12>(m_Device.get(), CD3DX12_RESOURCE_DESC::Buffer(sizeof(RaytracingPass::MaterialConstants)), QueueID::Direct);
-			m_MaterialUpload[i]->SetName(L"MaterialBuffer");
-
-			RaytracingPass::MaterialConstants mat = {};
-			if (i == 0)
-				mat.DiffuseColor = XMFLOAT3{ 1, 1, 1 };
-			else
-			{
-				mat.DiffuseColor = XMFLOAT3{ (rand() % 1000) / 1000.0f, (rand() % 1000) / 1000.0f, (rand() % 1000) / 1000.0f };
-			}
-
-			m_MaterialUpload[i]->LoadData(&mat);
-		}
 
 		ResizeOutputBuffer();
 
@@ -230,9 +143,6 @@ namespace RaytracingDX12
 			m_Camera->Move(upVector * moveScale * timer.GetDeltaTime());
 		if (InputManager::GetInstance().IsKeyPressed(DIK_Q))
 			m_Camera->Move(-upVector * moveScale * timer.GetDeltaTime());
-
-		if (InputManager::GetInstance().IsKeyDown(DIK_SPACE))
-			m_Raster = !m_Raster;
 
 		auto mouseState = InputManager::GetInstance().GetMouseState();
 
@@ -279,10 +189,17 @@ namespace RaytracingDX12
 		camConstants.ViewProjInv = XMMatrixTranspose(XMMatrixInverse(nullptr, viewProj));
 		m_CamUpload->LoadData(&camConstants);
 
-		m_MainRenderObject->WorldMatrix[0] = SimpleMath::Matrix::CreateScale(6.0f) * SimpleMath::Matrix::CreateRotationY(timer.GetTotalTime());
-		m_MainRenderObject->ObjectUpload[0]->LoadData(&(m_MainRenderObject->WorldMatrix[0].Transpose()));
+		m_Scene->Update(timer);
 
-		m_AccelerationStructure->Update(m_MainRenderObject->WorldMatrix[0]);
+		RenderObject* objects[] =
+		{
+			m_Scene->GetPlane(),
+			m_Scene->GetMain(),
+			m_Scene->GetSphere(),
+			m_Scene->GetWall(),
+		};
+
+		m_AccelerationStructure->Update(objects, 4);
 	}
 
 	void RenderEngine::Render()
@@ -300,99 +217,47 @@ namespace RaytracingDX12
 		dCommandContext.GetCmdList()->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 		dCommandContext.SetRenderTargets(1, &m_SwapChain->CurrentBackBufferView(), true, &m_SwapChain->DepthStencilView());
 
-		if (!m_Raster)
-		{
-			dCommandContext.ResourceBarrier(CD3DX12_RESOURCE_BARRIER::Transition(m_OutputBuffer->GetD3D12Resource(),
-				D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
-			dCommandContext.FlushResourceBarriers();
+		dCommandContext.ResourceBarrier(CD3DX12_RESOURCE_BARRIER::Transition(m_OutputBuffer->GetD3D12Resource(),
+			D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
+		dCommandContext.FlushResourceBarriers();
 
-			m_AccelerationStructure->CreateTopLevelAS(true);
+		m_AccelerationStructure->CreateTopLevelAS(true);
 
-			D3D12_DISPATCH_RAYS_DESC desc = {};
-			uint32_t rayGenerationSectionSizeInBytes = m_SbtHelper.GetRayGenSectionSize();
-			uint32_t missSectionSizeInBytes = m_SbtHelper.GetMissSectionSize();
-			uint32_t hitGroupsSectionSize = m_SbtHelper.GetHitGroupSectionSize();
+		D3D12_DISPATCH_RAYS_DESC desc = {};
+		uint32_t rayGenerationSectionSizeInBytes = m_SbtHelper.GetRayGenSectionSize();
+		uint32_t missSectionSizeInBytes = m_SbtHelper.GetMissSectionSize();
+		uint32_t hitGroupsSectionSize = m_SbtHelper.GetHitGroupSectionSize();
 
-			desc.RayGenerationShaderRecord.StartAddress = m_SbtStorage->GetD3D12Resource()->GetGPUVirtualAddress();
-			desc.RayGenerationShaderRecord.SizeInBytes = rayGenerationSectionSizeInBytes;
+		desc.RayGenerationShaderRecord.StartAddress = m_SbtStorage->GetD3D12Resource()->GetGPUVirtualAddress();
+		desc.RayGenerationShaderRecord.SizeInBytes = rayGenerationSectionSizeInBytes;
 
-			desc.MissShaderTable.StartAddress = m_SbtStorage->GetD3D12Resource()->GetGPUVirtualAddress() + rayGenerationSectionSizeInBytes;
-			desc.MissShaderTable.SizeInBytes = missSectionSizeInBytes;
-			desc.MissShaderTable.StrideInBytes = m_SbtHelper.GetMissEntrySize();
+		desc.MissShaderTable.StartAddress = m_SbtStorage->GetD3D12Resource()->GetGPUVirtualAddress() + rayGenerationSectionSizeInBytes;
+		desc.MissShaderTable.SizeInBytes = missSectionSizeInBytes;
+		desc.MissShaderTable.StrideInBytes = m_SbtHelper.GetMissEntrySize();
 
-			desc.HitGroupTable.StartAddress = m_SbtStorage->GetD3D12Resource()->GetGPUVirtualAddress() + rayGenerationSectionSizeInBytes + missSectionSizeInBytes;
-			desc.HitGroupTable.SizeInBytes = hitGroupsSectionSize;
-			desc.HitGroupTable.StrideInBytes = m_SbtHelper.GetHitGroupEntrySize();
+		desc.HitGroupTable.StartAddress = m_SbtStorage->GetD3D12Resource()->GetGPUVirtualAddress() + rayGenerationSectionSizeInBytes + missSectionSizeInBytes;
+		desc.HitGroupTable.SizeInBytes = hitGroupsSectionSize;
+		desc.HitGroupTable.StrideInBytes = m_SbtHelper.GetHitGroupEntrySize();
 
-			desc.Width = m_SwapChain->GetWidth();
-			desc.Height = m_SwapChain->GetHeight();
-			desc.Depth = 1;
+		desc.Width = m_SwapChain->GetWidth();
+		desc.Height = m_SwapChain->GetHeight();
+		desc.Depth = 1;
 
-			dCommandContext.GetCmdList()->SetPipelineState1(m_RaytracingPass->GetRtStateObject());
+		dCommandContext.GetCmdList()->SetPipelineState1(m_RaytracingPass->GetRtStateObject());
 
-			dCommandContext.GetCmdList()->DispatchRays(&desc);
+		dCommandContext.GetCmdList()->DispatchRays(&desc);
 
-			dCommandContext.ResourceBarrier(CD3DX12_RESOURCE_BARRIER::Transition(m_OutputBuffer->GetD3D12Resource(),
-				D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE));
-			dCommandContext.ResourceBarrier(CD3DX12_RESOURCE_BARRIER::Transition(m_SwapChain->CurrentBackBuffer(),
-				D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_DEST));
-			dCommandContext.FlushResourceBarriers();
+		dCommandContext.ResourceBarrier(CD3DX12_RESOURCE_BARRIER::Transition(m_OutputBuffer->GetD3D12Resource(),
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE));
+		dCommandContext.ResourceBarrier(CD3DX12_RESOURCE_BARRIER::Transition(m_SwapChain->CurrentBackBuffer(),
+			D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_DEST));
+		dCommandContext.FlushResourceBarriers();
 
-			dCommandContext.GetCmdList()->CopyResource(m_SwapChain->CurrentBackBuffer(), m_OutputBuffer->GetD3D12Resource());
+		dCommandContext.GetCmdList()->CopyResource(m_SwapChain->CurrentBackBuffer(), m_OutputBuffer->GetD3D12Resource());
 
-			dCommandContext.ResourceBarrier(CD3DX12_RESOURCE_BARRIER::Transition(m_SwapChain->CurrentBackBuffer(),
-				D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET));
-			dCommandContext.FlushResourceBarriers();
-		}
-		else
-		{
-			dCommandContext.SetViewports(&m_Viewport, 1);
-			dCommandContext.SetScissorRects(&m_ScissorRect, 1);
-
-			const float clear[4] = { 0, 1, 0, 1 };
-			dCommandContext.GetCmdList()->ClearRenderTargetView(m_SwapChain->CurrentBackBufferView(), clear, 0, nullptr);
-			dCommandContext.GetCmdList()->ClearDepthStencilView(m_SwapChain->DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-
-			dCommandContext.GetCmdList()->SetPipelineState(m_ColorPass->GetD3D12PipelineState());
-			dCommandContext.GetCmdList()->SetGraphicsRootSignature(m_ColorPass->GetD3D12RootSignature());
-
-			ColorPass::ObjectConstants objConstants;
-			objConstants.World = m_MainRenderObject->WorldMatrix[0].Transpose();
-
-			ColorPass::PassConstants passConstants;
-			XMStoreFloat4x4(&passConstants.ViewProj, XMMatrixTranspose(m_Camera->GetViewProjMatrix()));
-
-			DynamicUploadBuffer objBuffer(m_Device.get(), QueueID::Direct);
-			objBuffer.LoadData(objConstants);
-
-			DynamicUploadBuffer passBuffer(m_Device.get(), QueueID::Direct);
-			passBuffer.LoadData(passConstants);
-
-			D3D12_GPU_DESCRIPTOR_HANDLE albedoTex = {};
-			albedoTex.ptr = reinterpret_cast<UINT64>(m_MainTexture->GetGPUPtr());
-			dCommandContext.GetCmdList()->SetGraphicsRootDescriptorTable(0, albedoTex);
-			dCommandContext.GetCmdList()->SetGraphicsRootConstantBufferView(1, objBuffer.GetAllocation().GPUAddress);
-			dCommandContext.GetCmdList()->SetGraphicsRootConstantBufferView(2, passBuffer.GetAllocation().GPUAddress);
-
-			dCommandContext.GetCmdList()->IASetVertexBuffers(0, 1, &(m_MainRenderObject->GetVertexBuffer()->GetView()));
-			dCommandContext.GetCmdList()->IASetIndexBuffer(&(m_MainRenderObject->GetIndexBuffer()->GetView()));
-			dCommandContext.GetCmdList()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-			dCommandContext.GetCmdList()->DrawIndexedInstanced(m_MainRenderObject->GetIndexBuffer()->GetLength(), 1, 0, 0, 0);
-
-			objConstants.World = m_PlaneRenderObject->WorldMatrix[0].Transpose();
-			DynamicUploadBuffer planeObjBuffer(m_Device.get(), QueueID::Direct);
-			planeObjBuffer.LoadData(objConstants);
-
-			albedoTex.ptr = reinterpret_cast<UINT64>(m_PlaneTexture->GetGPUPtr());
-			dCommandContext.GetCmdList()->SetGraphicsRootDescriptorTable(0, albedoTex);
-			dCommandContext.GetCmdList()->SetGraphicsRootConstantBufferView(1, planeObjBuffer.GetAllocation().GPUAddress);
-
-			dCommandContext.GetCmdList()->IASetVertexBuffers(0, 1, &(m_PlaneRenderObject->GetVertexBuffer()->GetView()));
-			dCommandContext.GetCmdList()->IASetIndexBuffer(&(m_PlaneRenderObject->GetIndexBuffer()->GetView()));
-
-			dCommandContext.GetCmdList()->DrawIndexedInstanced(m_PlaneRenderObject->GetIndexBuffer()->GetLength(), 1, 0, 0, 0);
-		}
+		dCommandContext.ResourceBarrier(CD3DX12_RESOURCE_BARRIER::Transition(m_SwapChain->CurrentBackBuffer(),
+			D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET));
+		dCommandContext.FlushResourceBarriers();
 
 		dCommandContext.ResourceBarrier(CD3DX12_RESOURCE_BARRIER::Transition(m_SwapChain->CurrentBackBuffer(),
 			D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
@@ -483,74 +348,33 @@ namespace RaytracingDX12
 		m_SbtHelper.AddMissProgram(L"Miss", { (void*)m_MissPadding->GetD3D12Resource()->GetGPUVirtualAddress() });
 		m_SbtHelper.AddMissProgram(L"ShadowMiss", {});
 
-		// Plane
-		{
-			m_SbtHelper.AddHitGroup(L"HitGroup",
-				{
-					(void*)m_PlaneMesh->GetVertexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
-					(void*)m_PlaneMesh->GetIndexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
-					(void*)m_PlaneTexture->GetGPUPtr(),
-					tlasPointer,
-					(void*)m_PassUpload->GetD3D12Resource()->GetGPUVirtualAddress(),
-					(void*)m_PlaneRenderObject->ObjectUpload[0]->GetD3D12Resource()->GetGPUVirtualAddress(),
-					(void*)m_MaterialUpload[0]->GetD3D12Resource()->GetGPUVirtualAddress(),
-				});
-
-			m_SbtHelper.AddHitGroup(L"ShadowHitGroup", {});
-		}
-
-		// Main Object
-		{
-			m_SbtHelper.AddHitGroup(L"HitGroup",
-				{
-					(void*)m_MainMesh->GetVertexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
-					(void*)m_MainMesh->GetIndexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
-					(void*)m_MainTexture->GetGPUPtr(),
-					tlasPointer,
-					(void*)m_PassUpload->GetD3D12Resource()->GetGPUVirtualAddress(),
-					(void*)m_MainRenderObject->ObjectUpload[0]->GetD3D12Resource()->GetGPUVirtualAddress(),
-					(void*)m_MaterialUpload[0]->GetD3D12Resource()->GetGPUVirtualAddress(),
-				});
-
-			m_SbtHelper.AddHitGroup(L"ShadowHitGroup", {});
-		}
-
-		// Spheres
-		for (size_t i = 0; i < m_SphereRenderObject->InstanceCount; i++)
-		{
+		auto AddHitGroup = [this](UINT64* tlasPointer, RenderObject* ro, Material** materials = nullptr, int size = 0)
 			{
-				m_SbtHelper.AddHitGroup(L"HitGroup",
-					{
-						(void*)m_SphereMesh->GetVertexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
-						(void*)m_SphereMesh->GetIndexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
-						(void*)m_WhiteTexture->GetGPUPtr(),
-						tlasPointer,
-						(void*)m_PassUpload->GetD3D12Resource()->GetGPUVirtualAddress(),
-						(void*)m_SphereRenderObject->ObjectUpload[i]->GetD3D12Resource()->GetGPUVirtualAddress(),
-						(void*)m_MaterialUpload[i % 5]->GetD3D12Resource()->GetGPUVirtualAddress(),
-					});
-
-				m_SbtHelper.AddHitGroup(L"ShadowHitGroup", {});
-			}
-		}
-
-		// Walls
-		for (size_t i = 0; i < m_WallRenderObject->InstanceCount; i++)
-		{
-			m_SbtHelper.AddHitGroup(L"HitGroup",
+				for (size_t i = 0; i < ro->InstanceCount; i++)
 				{
-					(void*)m_WallMesh->GetVertexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
-					(void*)m_WallMesh->GetIndexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
-					(void*)m_WhiteTexture->GetGPUPtr(),
-					tlasPointer,
-					(void*)m_PassUpload->GetD3D12Resource()->GetGPUVirtualAddress(),
-					(void*)m_WallRenderObject->ObjectUpload[i]->GetD3D12Resource()->GetGPUVirtualAddress(),
-					(void*)m_MaterialUpload[0]->GetD3D12Resource()->GetGPUVirtualAddress(),
-				});
+					m_SbtHelper.AddHitGroup(L"HitGroup",
+						{
+							(void*)ro->GetMesh()->GetVertexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
+							(void*)ro->GetMesh()->GetIndexBuffer()->GetD3D12Resource()->GetGPUVirtualAddress(),
+							(void*)ro->GetMaterial()->GetMainTexture()->GetGPUPtr(),
+							tlasPointer,
+							(void*)m_PassUpload->GetD3D12Resource()->GetGPUVirtualAddress(),
+							(void*)ro->ObjectUpload[i]->GetD3D12Resource()->GetGPUVirtualAddress(),
 
-			m_SbtHelper.AddHitGroup(L"ShadowHitGroup", {});
-		}
+							materials ? 
+							(void*)materials[i % size]->GetMaterialBuffer()->GetGPUVirtualAddress() :
+							(void*)ro->GetMaterial()->GetMaterialBuffer()->GetGPUVirtualAddress(),
+						});
 
+					m_SbtHelper.AddHitGroup(L"ShadowHitGroup", {});
+				}
+			};
+
+		AddHitGroup(tlasPointer, m_Scene->GetPlane());
+		AddHitGroup(tlasPointer, m_Scene->GetMain());
+		AddHitGroup(tlasPointer, m_Scene->GetSphere(), m_Scene->GetBrightMaterials(), Scene::BrightMaterialsSize);
+		AddHitGroup(tlasPointer, m_Scene->GetWall());
+		
 		uint32_t sbtSize = m_SbtHelper.ComputeSBTSize();
 
 		D3D12_RESOURCE_DESC bufDesc = {};

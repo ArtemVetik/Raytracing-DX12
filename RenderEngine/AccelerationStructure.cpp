@@ -21,7 +21,7 @@ namespace RaytracingDX12
 
 			for (size_t j = 0; j < renderObjects[i]->InstanceCount; j++)
 			{
-				m_Instances.push_back({ blas[i].pResult, renderObjects[i]->WorldMatrix[j]});
+				m_Instances.push_back({ blas[i].pResult, renderObjects[i]->WorldMatrix[j] });
 			}
 		}
 
@@ -51,9 +51,16 @@ namespace RaytracingDX12
 		CreateTopLevelAS(m_Instances, updateOnly);
 	}
 
-	void AccelerationStructure::Update(DirectX::XMMATRIX world)
+	void AccelerationStructure::Update(RenderObject** renderObjects, int size)
 	{
-		m_Instances[1].second = world;
+		int index = 0;
+		for (size_t i = 0; i < size; i++)
+		{
+			for (size_t j = 0; j < renderObjects[i]->InstanceCount; j++)
+			{
+				m_Instances[index++].second = renderObjects[i]->WorldMatrix[j];
+			}
+		}
 	}
 
 	AccelerationStructure::AccelerationStructureBuffers AccelerationStructure::CreateBottomLevelAS(std::vector<Mesh*> meshes)

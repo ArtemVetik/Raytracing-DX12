@@ -2,12 +2,11 @@
 
 namespace RaytracingDX12
 {
-	Material::Material() :
+	Material::Material(RenderDeviceD3D12* device) :
+		m_Device(device),
 		m_MainTexture(nullptr),
 		m_RefCount(0),
-		m_DiffuseAlbedo(1.0f, 1.0f, 1.0f, 1.0f),
-		m_FresnelR0(0.01f, 0.01f, 0.01f),
-		m_Roughness(0.25f)
+		Constants{}
 	{
 	}
 
@@ -43,6 +42,10 @@ namespace RaytracingDX12
 
 		if (m_MainTexture)
 			m_MainTexture->Load();
+
+		m_MaterialBuffer = std::make_unique<BufferD3D12>(m_Device, CD3DX12_RESOURCE_DESC::Buffer(sizeof(MaterialConstants)), QueueID::Direct);
+		m_MaterialBuffer->SetName(L"MaterialBuffer");
+		m_MaterialBuffer->LoadData(&Constants);
 
 		m_RefCount = 1;
 	}

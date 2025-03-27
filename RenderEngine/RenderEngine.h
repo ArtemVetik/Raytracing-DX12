@@ -7,6 +7,7 @@
 #include "Window.h"
 #include "RenderObject.h"
 #include "AccelerationStructure.h"
+#include "Scene.h"
 
 #include "../Core/Graphics/SwapChain.h"
 #include "DXRHelpers/nv_helpers_dx12/ShaderBindingTableGenerator.h"
@@ -30,8 +31,6 @@ namespace RaytracingDX12
 		void Update(const Timer& timer) override;
 		void Render() override;
 
-		bool IsRaster() const override { return m_Raster; }
-
 		void PendingResize(UINT w, UINT h);
 
 		static RenderEngine* GetInstance();
@@ -51,20 +50,7 @@ namespace RaytracingDX12
 		std::unique_ptr<ColorPass> m_ColorPass;
 		std::unique_ptr<RaytracingPass> m_RaytracingPass;
 
-		std::shared_ptr<Texture> m_PlaneTexture;
-		std::shared_ptr<Texture> m_MainTexture;
-		std::shared_ptr<Texture> m_WhiteTexture;
-		std::shared_ptr<Mesh> m_PlaneMesh;
-		std::shared_ptr<Mesh> m_MainMesh;
-		std::shared_ptr<Mesh> m_SphereMesh;
-		std::shared_ptr<Mesh> m_WallMesh;
-		std::shared_ptr<Material> m_PlaneMaterial;
-		std::shared_ptr<Material> m_MainMaterial;
-		std::shared_ptr<Material> m_WhiteMaterial;
-		std::shared_ptr<RenderObject> m_PlaneRenderObject;
-		std::shared_ptr<RenderObject> m_MainRenderObject;
-		std::shared_ptr<RenderObject> m_SphereRenderObject;
-		std::shared_ptr<RenderObject> m_WallRenderObject;
+		std::shared_ptr<Scene> m_Scene;
 
 		std::unique_ptr<AccelerationStructure> m_AccelerationStructure;
 		std::unique_ptr<BufferD3D12> m_MissPadding;
@@ -73,10 +59,8 @@ namespace RaytracingDX12
 		std::unique_ptr<UploadBufferD3D12> m_SbtStorage;
 		std::unique_ptr<UploadBufferD3D12> m_PassUpload;
 		std::unique_ptr<UploadBufferD3D12> m_CamUpload;
-		std::unique_ptr<UploadBufferD3D12> m_MaterialUpload[5];
 
 		XMFLOAT3 m_LightPos;
-		bool m_Raster;
 		D3D12_VIEWPORT m_Viewport;
 		D3D12_RECT m_ScissorRect;
 		DXGI_ADAPTER_DESC1 m_DeviceDesc;

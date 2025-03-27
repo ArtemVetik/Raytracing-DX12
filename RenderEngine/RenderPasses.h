@@ -91,16 +91,6 @@ namespace RaytracingDX12
 			XMMATRIX ViewProjInv;
 		};
 
-		struct MaterialConstants
-		{
-			XMFLOAT3 DiffuseColor = { 1, 1, 1 };
-			float DiffuseCoef = 0.9;
-			float SpecularCoef = 0.7;
-			float SpecularPower = 50;
-			float ReflectanceCoef = 0.9;
-			float InShadowRadiance = 0.35f;
-		};
-
 	private:
 		ShaderD3D12 m_RayGenShader;
 		ShaderD3D12 m_HitShader;
