@@ -1,44 +1,6 @@
 #include "Common.hlsl"
+#include "HitBuffers.hlsl"
 #include "LightingUtil.hlsl"
-
-struct ShadowHitInfo
-{
-    bool IsHit;
-};
-
-struct SVertex
-{
-    float3 Pos;
-    float3 Normal;
-    float3 Tangent;
-    float2 TexC;
-};
-
-SamplerState gsamPointWrap : register(s0);
-SamplerState gsamPointClamp : register(s1);
-SamplerState gsamLinearWrap : register(s2);
-SamplerState gsamLinearClamp : register(s3);
-SamplerState gsamAnisotropicWrap : register(s4);
-SamplerState gsamAnisotropicClamp : register(s5);
-SamplerComparisonState gsamShadow : register(s6);
-
-StructuredBuffer<SVertex> gMeshVertex : register(t0);
-StructuredBuffer<uint> gMeshIndex : register(t1);
-Texture2D gAlbedo : register(t2);
-RaytracingAccelerationStructure gSceneBVH : register(t3);
-
-cbuffer gPassCB : register(b0)
-{
-    float3 gLightPos;
-    uint gPadding;
-    float3 gCamPos;
-    uint gPadding1;
-}
-
-cbuffer gObjectCB : register(b1)
-{
-    float4x4 gWorld;
-}
 
 float3 HitAttribute(float3 vertexAttribute[3], BuiltInTriangleIntersectionAttributes attr)
 {
@@ -73,7 +35,7 @@ void ClosestHit(inout HitInfo payload, BuiltInTriangleIntersectionAttributes att
     triangleNormal = normalize(mul(triangleNormal, (float3x3) gWorld));
     
     float texScale = InstanceID() == 0 ? 4 : 1;
-    float4 diffuseAlbedo = gAlbedo.SampleLevel(gsamPointWrap, texC * texScale, 0);
+    float4 diffuseAlbedo = gAlbedo.SampleLevel(gsamPointWrap, texC * texScale, 0) * float4(gDiffuseColor, 1);
     
     float4 color;
     if (payload.recursionDepth < 4)
@@ -114,14 +76,14 @@ void ClosestHit(inout HitInfo payload, BuiltInTriangleIntersectionAttributes att
         float4 reflectionColor = reflectionPayload.color;
 
         float3 fresnelR = FresnelReflectanceSchlick(WorldRayDirection(), triangleNormal, diffuseAlbedo.rgb);
-        float4 reflectedColor = reflectanceCoef * float4(fresnelR, 1) * reflectionColor;
+        float4 reflectedColor = gReflectanceCoef * float4(fresnelR, 1) * reflectionColor;
         
-        float4 phongColor = CalculatePhongLighting(gLightPos, diffuseAlbedo, triangleNormal, shadowPayload.IsHit, diffuseCoef, specularCoef, specularPower);
+        float4 phongColor = CalculatePhongLighting(gLightPos, diffuseAlbedo, triangleNormal, shadowPayload.IsHit, gDiffuseCoef, gSpecularCoef, gSpecularPower);
         color = phongColor + reflectedColor;
     }
     else
     {
-        color = CalculatePhongLighting(gLightPos, diffuseAlbedo, triangleNormal, false, diffuseCoef, specularCoef, specularPower);
+        color = CalculatePhongLighting(gLightPos, diffuseAlbedo, triangleNormal, false, gDiffuseCoef, gSpecularCoef, gSpecularPower);
     }
     
     payload.color = color;

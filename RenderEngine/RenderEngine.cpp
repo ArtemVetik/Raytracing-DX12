@@ -139,17 +139,16 @@ namespace RaytracingDX12
 		m_SphereRenderObject = std::make_shared<RenderObject>();
 		m_SphereRenderObject->SetMaterial(m_WhiteMaterial.get());
 		m_SphereRenderObject->SetMesh(m_SphereMesh.get());
-		m_SphereRenderObject->InstanceCount = 15;
+		m_SphereRenderObject->InstanceCount = 16;
 		for (size_t i = 0; i < m_SphereRenderObject->InstanceCount; i++)
 		{
-			srand(i * 123);
 			auto scale = 4 + rand() % 2;
 			auto radius = 30 + rand() % 70;
 			auto phi = rand();
 
 			auto x = cos(phi) * radius;
 			auto z = sin(phi) * radius;
-			auto y = 5 + rand() % 10;
+			auto y = 5 + rand() % 20;
 
 			m_SphereRenderObject->WorldMatrix[i] = SimpleMath::Matrix::CreateScale(scale) * SimpleMath::Matrix::CreateTranslation(x, y, z);
 			m_SphereRenderObject->ObjectUpload[i] = std::make_unique<UploadBufferD3D12>(m_Device.get(), CD3DX12_RESOURCE_DESC::Buffer(sizeof(RaytracingPass::ObjectConstants)), QueueID::Direct);
@@ -166,7 +165,7 @@ namespace RaytracingDX12
 		m_WallRenderObject->ObjectUpload[0]->LoadData(&(m_WallRenderObject->WorldMatrix[0].Transpose()));
 		m_WallRenderObject->ObjectUpload[1] = std::make_unique<UploadBufferD3D12>(m_Device.get(), CD3DX12_RESOURCE_DESC::Buffer(sizeof(RaytracingPass::ObjectConstants)), QueueID::Direct);
 		m_WallRenderObject->ObjectUpload[1]->LoadData(&(m_WallRenderObject->WorldMatrix[1].Transpose()));
-
+		
 		m_AccelerationStructure = std::make_unique<AccelerationStructure>(m_Device.get());
 
 		RenderObject* objects[] =
@@ -184,6 +183,22 @@ namespace RaytracingDX12
 
 		m_CamUpload = std::make_unique<UploadBufferD3D12>(m_Device.get(), CD3DX12_RESOURCE_DESC::Buffer(sizeof(RaytracingPass::CameraConstants)), QueueID::Direct);
 		m_CamUpload->SetName(L"CameraBuffer");
+
+		for (size_t i = 0; i < 5; i++)
+		{
+			m_MaterialUpload[i] = std::make_unique<UploadBufferD3D12>(m_Device.get(), CD3DX12_RESOURCE_DESC::Buffer(sizeof(RaytracingPass::MaterialConstants)), QueueID::Direct);
+			m_MaterialUpload[i]->SetName(L"MaterialBuffer");
+
+			RaytracingPass::MaterialConstants mat = {};
+			if (i == 0)
+				mat.DiffuseColor = XMFLOAT3{ 1, 1, 1 };
+			else
+			{
+				mat.DiffuseColor = XMFLOAT3{ (rand() % 1000) / 1000.0f, (rand() % 1000) / 1000.0f, (rand() % 1000) / 1000.0f };
+			}
+
+			m_MaterialUpload[i]->LoadData(&mat);
+		}
 
 		ResizeOutputBuffer();
 
@@ -478,6 +493,7 @@ namespace RaytracingDX12
 					tlasPointer,
 					(void*)m_PassUpload->GetD3D12Resource()->GetGPUVirtualAddress(),
 					(void*)m_PlaneRenderObject->ObjectUpload[0]->GetD3D12Resource()->GetGPUVirtualAddress(),
+					(void*)m_MaterialUpload[0]->GetD3D12Resource()->GetGPUVirtualAddress(),
 				});
 
 			m_SbtHelper.AddHitGroup(L"ShadowHitGroup", {});
@@ -493,6 +509,7 @@ namespace RaytracingDX12
 					tlasPointer,
 					(void*)m_PassUpload->GetD3D12Resource()->GetGPUVirtualAddress(),
 					(void*)m_MainRenderObject->ObjectUpload[0]->GetD3D12Resource()->GetGPUVirtualAddress(),
+					(void*)m_MaterialUpload[0]->GetD3D12Resource()->GetGPUVirtualAddress(),
 				});
 
 			m_SbtHelper.AddHitGroup(L"ShadowHitGroup", {});
@@ -510,6 +527,7 @@ namespace RaytracingDX12
 						tlasPointer,
 						(void*)m_PassUpload->GetD3D12Resource()->GetGPUVirtualAddress(),
 						(void*)m_SphereRenderObject->ObjectUpload[i]->GetD3D12Resource()->GetGPUVirtualAddress(),
+						(void*)m_MaterialUpload[i % 5]->GetD3D12Resource()->GetGPUVirtualAddress(),
 					});
 
 				m_SbtHelper.AddHitGroup(L"ShadowHitGroup", {});
@@ -527,6 +545,7 @@ namespace RaytracingDX12
 					tlasPointer,
 					(void*)m_PassUpload->GetD3D12Resource()->GetGPUVirtualAddress(),
 					(void*)m_WallRenderObject->ObjectUpload[i]->GetD3D12Resource()->GetGPUVirtualAddress(),
+					(void*)m_MaterialUpload[0]->GetD3D12Resource()->GetGPUVirtualAddress(),
 				});
 
 			m_SbtHelper.AddHitGroup(L"ShadowHitGroup", {});

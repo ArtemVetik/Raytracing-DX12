@@ -73,6 +73,7 @@ namespace RaytracingDX12
 		std::unique_ptr<UploadBufferD3D12> m_SbtStorage;
 		std::unique_ptr<UploadBufferD3D12> m_PassUpload;
 		std::unique_ptr<UploadBufferD3D12> m_CamUpload;
+		std::unique_ptr<UploadBufferD3D12> m_MaterialUpload[5];
 
 		XMFLOAT3 m_LightPos;
 		bool m_Raster;

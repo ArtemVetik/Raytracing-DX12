@@ -91,6 +91,16 @@ namespace RaytracingDX12
 			XMMATRIX ViewProjInv;
 		};
 
+		struct MaterialConstants
+		{
+			XMFLOAT3 DiffuseColor = { 1, 1, 1 };
+			float DiffuseCoef = 0.9;
+			float SpecularCoef = 0.7;
+			float SpecularPower = 50;
+			float ReflectanceCoef = 0.9;
+			float InShadowRadiance = 0.35f;
+		};
+
 	private:
 		ShaderD3D12 m_RayGenShader;
 		ShaderD3D12 m_HitShader;
@@ -136,6 +146,7 @@ namespace RaytracingDX12
 
 			m_HitSignature.AddConstantBufferView(0); // pass
 			m_HitSignature.AddConstantBufferView(1); // object
+			m_HitSignature.AddConstantBufferView(2); // material
 
 			m_HitSignature.Build(device, QueueID::Direct, true);
 			m_HitSignature.SetName(L"HitSignature");
@@ -154,8 +165,8 @@ namespace RaytracingDX12
 			pipeline.AddHitGroup(L"ShadowHitGroup", L"ShadowClosestHit");
 
 			pipeline.AddRootSignatureAssociation(m_RayGenSignature.GetD3D12RootSignature(), { L"RayGen" });
-			pipeline.AddRootSignatureAssociation(m_MissSignature.GetD3D12RootSignature(), { L"Miss", L"ShadowMiss"});
-			pipeline.AddRootSignatureAssociation(m_HitSignature.GetD3D12RootSignature(), { L"HitGroup", L"ShadowHitGroup"});
+			pipeline.AddRootSignatureAssociation(m_MissSignature.GetD3D12RootSignature(), { L"Miss", L"ShadowMiss" });
+			pipeline.AddRootSignatureAssociation(m_HitSignature.GetD3D12RootSignature(), { L"HitGroup", L"ShadowHitGroup" });
 
 			pipeline.SetMaxPayloadSize(4 * sizeof(float) + sizeof(UINT)); // RGB + distance + recursion depth
 			pipeline.SetMaxAttributeSize(2 * sizeof(float)); // barycentric coordinates

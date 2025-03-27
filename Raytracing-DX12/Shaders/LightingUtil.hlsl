@@ -1,10 +1,7 @@
+#include "HitBuffers.hlsl"
+
 static const float4 lightAmbientColor = float4(0.2, 0.2, 0.2, 1.0);
 static const float4 lightDiffuseColor = float4(0.2, 0.2, 0.2, 1.0);
-static const float diffuseCoef = 0.9;
-static const float specularCoef = 0.7;
-static const float specularPower = 50;
-static const float reflectanceCoef = 0.9;
-static const float InShadowRadiance = 0.35f;
 
 float4 linearToSrgb(float4 c)
 {
@@ -37,17 +34,17 @@ float4 CalculateSpecularCoefficient(in float3 hitPosition, in float3 incidentLig
 }
 
 // Phong lighting model = ambient + diffuse + specular components.
-float4 CalculatePhongLighting(in float3 lightPosition, in float4 albedo, in float3 normal, in bool isInShadow, in float diffuseCoef = 1.0, in float specularCoef = 1.0, in float specularPower = 50)
+float4 CalculatePhongLighting(in float3 lightPos, in float4 albedo, in float3 normal, in bool isInShadow, in float diffuseCoef = 1.0, in float specularCoef = 1.0, in float specularPower = 50)
 {
     float3 hitPosition = HitWorldPosition();
-    float shadowFactor = isInShadow ? InShadowRadiance : 1.0;
-    float3 incidentLightRay = normalize(hitPosition - lightPosition);
+    float shadowFactor = isInShadow ? gInShadowRadiance : 1.0;
+    float3 incidentLightRay = normalize(hitPosition - lightPos);
 
-    // Diffuse component.
+	// Diffuse component.
     float Kd = CalculateDiffuseCoefficient(hitPosition, incidentLightRay, normal);
     float4 diffuseColor = shadowFactor * diffuseCoef * Kd * lightDiffuseColor * albedo;
 
-    // Specular component.
+	// Specular component.
     float4 specularColor = float4(0, 0, 0, 0);
     if (!isInShadow)
     {
@@ -56,8 +53,8 @@ float4 CalculatePhongLighting(in float3 lightPosition, in float4 albedo, in floa
         specularColor = specularCoef * Ks * lightSpecularColor;
     }
 
-    // Ambient component.
-    // Fake AO: Darken faces with normal facing downwards/away from the sky a little bit.
+	// Ambient component.
+	// Fake AO: Darken faces with normal facing downwards/away from the sky a little bit.
     float4 ambientColor = lightAmbientColor;
     float4 ambientColorMin = lightAmbientColor - 0.15;
     float4 ambientColorMax = lightAmbientColor;
