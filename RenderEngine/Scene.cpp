@@ -63,8 +63,8 @@ namespace RaytracingDX12
 		m_WallRenderObject->SetMaterial(m_WhiteMaterial.get());
 		m_WallRenderObject->SetMesh(m_WallMesh.get());
 		m_WallRenderObject->InstanceCount = 2;
-		m_WallRenderObject->WorldMatrix[0] = SimpleMath::Matrix::CreateScale(4, 80, 200) * SimpleMath::Matrix::CreateTranslation(-100, 40, 0);
-		m_WallRenderObject->WorldMatrix[1] = SimpleMath::Matrix::CreateScale(4, 80, 200) * SimpleMath::Matrix::CreateTranslation(+100, 40, 0);
+		m_WallRenderObject->WorldMatrix[0] = SimpleMath::Matrix::CreateScale(5, 120, 200) * SimpleMath::Matrix::CreateTranslation(-100, 60, 0);
+		m_WallRenderObject->WorldMatrix[1] = SimpleMath::Matrix::CreateScale(5, 120, 200) * SimpleMath::Matrix::CreateTranslation(+100, 60, 0);
 		m_WallRenderObject->ObjectUpload[0] = std::make_unique<UploadBufferD3D12>(device, CD3DX12_RESOURCE_DESC::Buffer(sizeof(RaytracingPass::ObjectConstants)), QueueID::Direct);
 		m_WallRenderObject->ObjectUpload[0]->LoadData(&(m_WallRenderObject->WorldMatrix[0].Transpose()));
 		m_WallRenderObject->ObjectUpload[1] = std::make_unique<UploadBufferD3D12>(device, CD3DX12_RESOURCE_DESC::Buffer(sizeof(RaytracingPass::ObjectConstants)), QueueID::Direct);
@@ -108,7 +108,7 @@ namespace RaytracingDX12
 
 	void Scene::Update(const Timer& timer)
 	{
-		m_MainRenderObject->WorldMatrix[0] = SimpleMath::Matrix::CreateScale(0.08f) * SimpleMath::Matrix::CreateRotationY(timer.GetTotalTime()) * SimpleMath::Matrix::CreateTranslation(0, -4, 0);
+		m_MainRenderObject->WorldMatrix[0] = SimpleMath::Matrix::CreateScale(0.12f) * SimpleMath::Matrix::CreateRotationY(XM_PIDIV2 * -1.2f) * SimpleMath::Matrix::CreateTranslation(0, -4, 0);
 		m_MainRenderObject->ObjectUpload[0]->LoadData(&(m_MainRenderObject->WorldMatrix[0].Transpose()));
 
 		float angleStep = XM_2PI / m_SphereRenderObject->InstanceCount;

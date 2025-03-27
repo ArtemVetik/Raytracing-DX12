@@ -9,7 +9,7 @@ namespace RaytracingDX12
 		m_NearValue = 1.0f;
 		m_FarValue = 1000.0f;
 
-		XMVECTOR pos = XMVectorSet(0.0f, 80.0f, -200.0f, 0.0f);
+		XMVECTOR pos = XMVectorSet(0.0f, 100.0f, -200.0f, 0.0f);
 		XMVECTOR dir = XMVector3Normalize(XMVectorSet(0.0f, -0.3f, 1.0f, 0.0f));
 		XMVECTOR up = XMVectorSet(0, 1, 0, 0);
 
