@@ -173,4 +173,74 @@ namespace RaytracingDX12
 		ID3D12StateObjectProperties* GetRtStateObjectProps() const { return m_RtStateObjectProps.Get(); }
 		ID3D12StateObject* GetRtStateObject() const { return m_RtStateObject.Get(); }
 	};
+
+	class PathtracingPass
+	{
+	public:
+
+	private:
+		ShaderD3D12 m_Shader;
+		RootSignatureD3D12 m_RootSignature;
+
+		ComPtr<ID3D12StateObject> m_PtStateObject;
+		ComPtr<ID3D12StateObjectProperties> m_PtStateObjectProps;
+
+	public:
+		PathtracingPass(RenderDeviceD3D12* device, const LPCWSTR* macros = nullptr) :
+			m_Shader(L"Shaders\\Pathtracer\\PathtraceShader.hlsl", EDU_SHADER_TYPE_LIB, macros, L"", L"lib_6_3")
+		{
+			CD3DX12_DESCRIPTOR_RANGE tlas;
+			tlas.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 100);
+			m_RootSignature.AddDescriptorParameter(1, &tlas); // TLAS
+
+			CD3DX12_DESCRIPTOR_RANGE output;
+			output.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);
+			m_RootSignature.AddDescriptorParameter(1, &output); // output
+
+			CD3DX12_DESCRIPTOR_RANGE objBuffer;
+			objBuffer.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+			m_RootSignature.AddDescriptorParameter(1, &objBuffer); // object buffer
+
+			CD3DX12_DESCRIPTOR_RANGE vertexBuffer;
+			vertexBuffer.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1);
+			m_RootSignature.AddDescriptorParameter(1, &vertexBuffer); // vertex buffer
+
+			CD3DX12_DESCRIPTOR_RANGE indexBuffer;
+			indexBuffer.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2);
+			m_RootSignature.AddDescriptorParameter(1, &indexBuffer); // index buffer
+
+			CD3DX12_DESCRIPTOR_RANGE materialBuffer;
+			materialBuffer.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3);
+			m_RootSignature.AddDescriptorParameter(1, &materialBuffer); // material buffer
+
+			m_RootSignature.AddConstantBufferView(0); // global constants
+			m_RootSignature.AddConstantBufferView(1); // object constants
+
+			m_RootSignature.Build(device, QueueID::Direct, true);
+			m_RootSignature.SetName(L"PathtracingRootSignature");
+
+			nv_helpers_dx12::RayTracingPipelineGenerator pipeline(device->GetD3D12Device());
+
+			pipeline.AddLibrary(m_Shader.GetShaderBlob().Get(), { L"rayGen", L"closestHit", L"closestHitGlass", L"missRay", L"missShadow" });
+
+			pipeline.AddHitGroup(L"hitGp", L"closestHit");
+			pipeline.AddHitGroup(L"hitGpGlass", L"closestHitGlass");
+
+			pipeline.AddRootSignatureAssociation(m_RootSignature.GetD3D12RootSignature(), { L"rayGen", L"hitGp", L"hitGpGlass", L"missRay" });
+
+			pipeline.SetMaxPayloadSize(16 * sizeof(float));
+			pipeline.SetMaxAttributeSize(2 * sizeof(float));
+			pipeline.SetMaxRecursionDepth(2);
+
+			m_PtStateObject = pipeline.Generate();
+
+			if (FAILED(m_PtStateObject->QueryInterface(IID_PPV_ARGS(&m_PtStateObjectProps))))
+				throw std::runtime_error("Failed to query ID3D12StateObjectProperties");
+
+			m_PtStateObject->SetName(L"PtStateObject");
+		}
+
+		ID3D12StateObjectProperties* GetPtStateObjectProps() const { return m_PtStateObjectProps.Get(); }
+		ID3D12StateObject* GetPtStateObject() const { return m_PtStateObject.Get(); }
+	};
 }

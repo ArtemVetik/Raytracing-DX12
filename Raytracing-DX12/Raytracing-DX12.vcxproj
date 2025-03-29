@@ -152,6 +152,7 @@
     <None Include="Shaders\Miss.hlsl">
       <FileType>Document</FileType>
     </None>
+    <None Include="Shaders\Pathtracer\Sampling.hlsli" />
     <None Include="Shaders\RayGen.hlsl">
       <FileType>Document</FileType>
     </None>
@@ -168,6 +169,11 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\HitBuffers.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\Pathtracer\PathtraceShader.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

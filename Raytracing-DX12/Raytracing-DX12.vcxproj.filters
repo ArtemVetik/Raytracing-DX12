@@ -16,6 +16,9 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{eea21633-2eb6-406f-8b36-35b641211f9d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shaders\Pathtracer">
+      <UniqueIdentifier>{1ecaf809-d705-4005-91e3-db6ddcb32811}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -46,6 +49,12 @@
     </None>
     <None Include="Shaders\HitBuffers.hlsl">
       <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\Pathtracer\Sampling.hlsli">
+      <Filter>Shaders\Pathtracer</Filter>
+    </None>
+    <None Include="Shaders\Pathtracer\PathtraceShader.hlsl">
+      <Filter>Shaders\Pathtracer</Filter>
     </None>
   </ItemGroup>
 </Project>

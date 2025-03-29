@@ -92,6 +92,7 @@ namespace RaytracingDX12
 
 		m_ColorPass = std::make_unique<ColorPass>(m_Device.get());
 		m_RaytracingPass = std::make_unique<RaytracingPass>(m_Device.get());
+		m_PathtracingPass = std::make_unique<PathtracingPass>(m_Device.get());
 
 		m_Scene = std::make_unique<Scene>(m_Device.get());
 

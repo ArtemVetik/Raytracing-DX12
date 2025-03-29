@@ -51,6 +51,7 @@ namespace RaytracingDX12
 
 		std::unique_ptr<ColorPass> m_ColorPass;
 		std::unique_ptr<RaytracingPass> m_RaytracingPass;
+		std::unique_ptr<PathtracingPass> m_PathtracingPass;
 
 		std::shared_ptr<Scene> m_Scene;
 
